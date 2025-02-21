@@ -12,7 +12,7 @@ router.post("/create", authenticateToken, async (req, res) => {
   const newAssignment = new Assignment({ assignmentNumber, title, description, classId, dateOfAssignment });
 
   await newAssignment.save();
-  res.json({ message: "Assignment created successfully" });
+  res.json({ message: "Assignment created successfully", assignmentId:newAssignment._id });
 });
 
 module.exports = router;

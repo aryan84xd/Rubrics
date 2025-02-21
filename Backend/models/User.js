@@ -1,22 +1,21 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
 
-const UserSchema = new mongoose.Schema({
-  sapid: { type: String, unique: true, required: true }, // Primary Key
-  password: { type: String, required: true },
-  name: { type: String, required: true },
-  role: { type: String, enum: ["professor", "student"], required: true }
-});
+const userSchema = new mongoose.Schema({
+    sapid: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    name: { type: String, required: true },
+    role: { type: String, enum: ["student", "professor"], required: true },
+    rollNumber: { 
+        type: String, 
+        required: function() { return this.role === "student"; }, 
+        unique: function() { return this.role === "student"; } 
+    },
+    year: { 
+        type: Number, 
+        required: function() { return this.role === "student"; } 
+    }
+}, { timestamps: true });
 
-// Hash password before saving
-UserSchema.statics.hashPassword = async function (password) {
-  return await bcrypt.hash(password, 10);
-};
-
-UserSchema.methods.isValidPassword = async function (password) {
-  return await bcrypt.compare(password, this.password);
-};
-
-const User = mongoose.model("User", UserSchema);
+const User = mongoose.model("User", userSchema);
 module.exports = User;
     

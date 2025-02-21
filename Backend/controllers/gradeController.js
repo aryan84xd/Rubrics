@@ -1,94 +1,116 @@
 const Grade = require("../models/Grade");
+const User = require("../models/User");
 const Assignment = require("../models/Assignment");
 const mongoose = require("mongoose");
-// ✅ Add a Grade
+
+// ✅ Add a Grade using Assignment ID, Roll Number, and Year
 const addGrade = async (req, res) => {
     try {
-        const { assignmentId, studentId, knowledge, description, demonstration, strategy, attitude } = req.body;
+        const { assignmentId, rollNumber, year, knowledge, description, demonstration, strategy, attitude } = req.body;
 
-        if (!assignmentId || !studentId) {
-            return res.status(400).json({ message: "Assignment ID and Student ID are required." });
+        if (!assignmentId || !rollNumber || !year) {
+            return res.status(400).json({ message: "Assignment ID, Roll Number, and Year are required." });
         }
 
-        const grade = new Grade({ assignmentId, studentId, knowledge, description, demonstration, strategy, attitude });
+        // Find student by rollNumber and year
+        const student = await User.findOne({ rollNumber, year, role: "student" });
+
+        if (!student) {
+            return res.status(404).json({ message: "Student not found with this Roll Number and Year." });
+        }
+
+        // Check if a grade already exists for this student and assignment
+        const existingGrade = await Grade.findOne({ assignmentId, studentId: student._id });
+
+        if (existingGrade) {
+            return res.status(400).json({ message: "Grade already exists for this assignment and student." });
+        }
+
+        // Create and save the grade
+        const grade = new Grade({
+            assignmentId,
+            studentId: student._id,
+            knowledge,
+            description,
+            demonstration,
+            strategy,
+            attitude
+        });
+
         await grade.save();
-
         res.status(201).json({ message: "Grade added successfully", grade });
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error" });
     }
 };
 
-// ✅ Get Grades of a Student
-const getGradesByStudent = async (req, res) => {
+
+const getGradesByClass = async (req, res) => {
     try {
-        const { studentId } = req.params;
-        console.log(studentId);
-        const grades = await Grade.find({ studentId }).populate("assignmentId", "title");
+        const { classId } = req.params;
 
-        if (!grades.length) {
-            return res.status(404).json({ message: "No grades found for this student." });
+        if (!classId) {
+            return res.status(400).json({ message: "Class ID is required." });
         }
 
-        res.json(grades);
+        // Trim and convert classId to ObjectId
+        const cleanClassId = classId.trim();
+        if (!mongoose.Types.ObjectId.isValid(cleanClassId)) {
+            return res.status(400).json({ message: "Invalid Class ID format." });
+        }
+        const classObjectId = new mongoose.Types.ObjectId(cleanClassId);
+
+        // ✅ Extract user ID from token (already verified by middleware)
+        const studentId = req.user.id;
+
+        // Find assignments for the given class
+        const assignments = await Assignment.find({ classId: classObjectId });
+        const assignmentIds = assignments.map(a => a._id);
+
+        // Find grades for the student in the given class
+        const grades = await Grade.find({ studentId, assignmentId: { $in: assignmentIds } })
+                                  .populate("assignmentId", "assignmentNumber title dateOfAssignment");
+
+        // Calculate individual assignment totals and class average
+        let totalScoreSum = 0;
+        let totalAssignments = grades.length;
+
+        const formattedGrades = grades.map(grade => {
+            const total = (grade.knowledge || 0) + 
+                          (grade.description || 0) + 
+                          (grade.demonstration || 0) + 
+                          (grade.strategy || 0) + 
+                          (grade.attitude || 0);
+
+            totalScoreSum += total;
+
+            return {
+                assignmentNumber: grade.assignmentId.assignmentNumber,
+                title: grade.assignmentId.title,
+                dateOfAssignment: grade.assignmentId.dateOfAssignment,
+                knowledge: grade.knowledge || 0,
+                description: grade.description || 0,
+                demonstration: grade.demonstration || 0,
+                strategy: grade.strategy || 0,
+                attitude: grade.attitude || 0,
+                total: total
+            };
+        });
+
+        const classAverage = totalAssignments > 0 ? totalScoreSum / totalAssignments : null;
+
+        res.status(200).json({ grades: formattedGrades, classAverage });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server error" });
-    }
-};
-
-// ✅ Get Grades for an Assignment
-const getGradesByAssignment = async (req, res) => {
-    try {
-        const { assignmentId } = req.params;
-        const grades = await Grade.find({ assignmentId }).populate("studentId", "name email");
-
-        if (!grades.length) {
-            return res.status(404).json({ message: "No grades found for this assignment." });
-        }
-
-        res.json(grades);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server error" });
-    }
-};
-
-// ✅ Get Grades of a Student for a Specific Class
-const getGradesByStudentAndClass = async (req, res) => {
-    try {
-        let { studentId, classId } = req.params;
-
-        // Trim classId and studentId to remove extra spaces or newline characters
-        studentId = studentId.trim();
-        classId = classId.trim();
-
-        // Validate ObjectId format
-        if (!mongoose.Types.ObjectId.isValid(studentId) || !mongoose.Types.ObjectId.isValid(classId)) {
-            return res.status(400).json({ message: "Invalid Student ID or Class ID format" });
-        }
-
-        const grades = await Grade.find({ studentId })
-            .populate({
-                path: "assignmentId",
-                match: { classId: classId }, // Filter assignments by classId
-                select: "title"
-            });
-
-        // Remove assignments that were not matched
-        const filteredGrades = grades.filter(grade => grade.assignmentId);
-
-        if (!filteredGrades.length) {
-            return res.status(404).json({ message: "No grades found for this student in this class." });
-        }
-
-        res.json(filteredGrades);
-    } catch (error) {
-        console.error(error);
+        console.error("Error fetching grades:", error);
         res.status(500).json({ message: "Server error" });
     }
 };
 
 
-module.exports = { addGrade, getGradesByStudent, getGradesByAssignment, getGradesByStudentAndClass };
+
+module.exports = { 
+    addGrade, 
+    getGradesByClass
+};
