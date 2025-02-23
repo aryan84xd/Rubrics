@@ -1,0 +1,25 @@
+
+.wmax{
+    width: 100%;
+  }
+  
+  #root {
+    /* max-width: 1280px; */
+    margin: 0 auto;
+    padding: 0rem;
+    text-align: center;
+  }
+  
+  
+  .hmax{
+    height: 100%;
+  }
+  
+  .hvh{
+    height: 100vh;
+  }
+  
+  .h1000{
+    height: 1000px;
+  }
+  
