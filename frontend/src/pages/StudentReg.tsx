@@ -4,7 +4,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -16,19 +16,19 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select";
 
 const formSchema = z.object({
   sapid: z.string().length(12, "SAP ID must be exactly 12 characters"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(2, "Name must be at least 2 characters"),
-  role: z.enum(["student", "alumni"]),
+  role: z.enum(["student"]),
   rollNumber: z.string().min(4, "Roll Number must be at least 4 characters"),
   year: z.string().min(4, "Invalid year"),
 });
@@ -132,7 +132,7 @@ export default function StudentRegister() {
                 </FormItem>
               )}
             />
-            <FormField
+            {/* <FormField
               control={form.control}
               name="role"
               render={({ field }) => (
@@ -161,7 +161,7 @@ export default function StudentRegister() {
                   <FormMessage className="text-red-500 text-left" />
                 </FormItem>
               )}
-            />
+            /> */}
             <FormField
               control={form.control}
               name="rollNumber"
@@ -206,9 +206,14 @@ export default function StudentRegister() {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Registering..." : "Register"}
-            </Button>
+            <div className="flex space-x-4">
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Registering..." : "Register"}
+              </Button>
+              <Link to="/loginstudent">
+                <Button variant="outline">Login</Button>
+              </Link>
+            </div>
           </form>
         </Form>
       </div>
