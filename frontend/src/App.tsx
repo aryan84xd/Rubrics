@@ -1,7 +1,6 @@
 import AppRoutes from "./routes/AppRoutes";
 // import "./globals.css"
 import "./index.css";
-import Login from "./pages/LoginProf";
 import {
   BrowserRouter as Router,
   Routes,
