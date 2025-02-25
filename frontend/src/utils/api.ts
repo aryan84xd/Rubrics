@@ -57,3 +57,35 @@ export const loginUser = async (sapid: string, password: string): Promise<LoginR
         throw new Error("Something went wrong");
     }
 };
+export async function registerUser({
+  sapid,
+  password,
+  name,
+  role,
+}: {
+  sapid: string;
+  password: string;
+  name: string;
+  role: "professor";
+}) {
+  try {
+    const response = await fetch("/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ sapid, password, name, role }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Registration failed");
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error during registration:", error);
+    throw error;
+  }
+}
