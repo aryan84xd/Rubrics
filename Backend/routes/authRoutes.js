@@ -8,7 +8,8 @@ dotenv.config(); // ✅ Load environment variables
 
 const router = express.Router();
 const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key";
-
+// 🔹 LOGIN API (Now Returns Token)
+// 🔹 Student Registration API
 // 🔹 Registration API
 router.post("/register", async (req, res) => {
   try { 
@@ -19,22 +20,22 @@ router.post("/register", async (req, res) => {
     }
 
     // ✅ Ensure rollNumber & year are provided for students
-    if (role === "student" && (!rollNumber || !year)) {
-      return res.status(400).json({ message: "Roll number and year are required for students" });
+    if (role === "student") {
+      if (!rollNumber || !year) {
+        return res.status(400).json({ message: "Roll number and year are required for students" });
+      }
+
+      // ✅ Check if Roll Number already exists for the same Year (manual check)
+      const existingRollNO = await User.findOne({ rollNumber, year, role: "student" });
+      if (existingRollNO) {
+        return res.status(400).json({ message: "Roll number already exists for this year" });
+      }
     }
 
     // Check if SAP ID is already registered
     const existingUser = await User.findOne({ sapid });
     if (existingUser) {
       return res.status(400).json({ message: "SAP ID already exists" });
-    }
-
-    // ✅ Check if Roll Number already exists for the same Year (only for students)
-    if (role === "student") {
-      const existingRollNO = await User.findOne({ rollNumber, year });
-      if (existingRollNO) {
-        return res.status(400).json({ message: "Roll number already exists for this year" });
-      }
     }
 
     // Hash Password
@@ -46,7 +47,8 @@ router.post("/register", async (req, res) => {
       password: hashedPassword,
       name,
       role,
-      ...(role === "student" && { rollNumber, year }) // Only add rollNumber & year for students
+      rollNumber: role === "student" ? rollNumber : undefined,
+      year: role === "student" ? year : undefined,
     });
 
     await newUser.save();
@@ -57,7 +59,6 @@ router.post("/register", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error", error });
   }
 });
-
 
 // 🔹 LOGIN API
 router.post("/login", async (req, res) => {
