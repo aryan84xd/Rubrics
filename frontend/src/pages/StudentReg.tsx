@@ -24,11 +24,8 @@ import { Input } from "@/components/ui/input";
 //   SelectValue,
 // } from "@/components/ui/select";
 
-import { registerUser } from "@/utils/api"; // Adjust path as needed
-import { toast } from "react-toastify";
-
 const formSchema = z.object({
-  sapid: z.string().min(6, "SAP ID must be at least 6 characters"),
+  sapid: z.string().length(12, "SAP ID must be exactly 12 characters"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(2, "Name must be at least 2 characters"),
   role: z.enum(["student"]),
@@ -51,17 +48,13 @@ export default function StudentRegister() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    try {
-      await registerUser(values.sapid, values.password, values.name, values.role, values.rollNumber, values.year);
-      toast.success("Registration successful!");
-      form.reset();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Registration failed");
-    } finally {
+    console.log(values);
+    setTimeout(() => {
       setIsSubmitting(false);
-    }
+      form.reset();
+    }, 2000);
   }
 
   return (
