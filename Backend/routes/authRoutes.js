@@ -8,20 +8,33 @@ dotenv.config(); // ✅ Load environment variables
 
 const router = express.Router();
 const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key";
-// 🔹 LOGIN API (Now Returns Token)
-// 🔹 Student Registration API
+
+// 🔹 Registration API
 router.post("/register", async (req, res) => {
-  try {
+  try { 
     const { sapid, password, name, rollNumber, year, role } = req.body;
 
     if (!sapid || !password || !name || !role) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
+    // ✅ Ensure rollNumber & year are provided for students
+    if (role === "student" && (!rollNumber || !year)) {
+      return res.status(400).json({ message: "Roll number and year are required for students" });
+    }
+
     // Check if SAP ID is already registered
     const existingUser = await User.findOne({ sapid });
     if (existingUser) {
       return res.status(400).json({ message: "SAP ID already exists" });
+    }
+
+    // ✅ Check if Roll Number already exists for the same Year (only for students)
+    if (role === "student") {
+      const existingRollNO = await User.findOne({ rollNumber, year });
+      if (existingRollNO) {
+        return res.status(400).json({ message: "Roll number already exists for this year" });
+      }
     }
 
     // Hash Password
@@ -33,8 +46,7 @@ router.post("/register", async (req, res) => {
       password: hashedPassword,
       name,
       role,
-      rollNumber: role === "student" ? rollNumber : undefined,
-      year: role === "student" ? year : undefined,
+      ...(role === "student" && { rollNumber, year }) // Only add rollNumber & year for students
     });
 
     await newUser.save();
@@ -42,9 +54,10 @@ router.post("/register", async (req, res) => {
 
   } catch (error) {
     console.error("Registration Error:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ message: "Internal Server Error", error });
   }
 });
+
 
 // 🔹 LOGIN API
 router.post("/login", async (req, res) => {

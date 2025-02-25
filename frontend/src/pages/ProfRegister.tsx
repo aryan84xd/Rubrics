@@ -18,8 +18,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
+import { registerUser } from "@/utils/api";
+
 const formSchema = z.object({
-  sapid: z.string().length(12, "SAP ID must be exactly 12 characters"),
+  sapid: z.string().min(6, "SAP ID must be at least 6 characters"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(2, "Name must be at least 2 characters"),
   role: z.enum(["professor"]),
@@ -28,24 +30,37 @@ const formSchema = z.object({
 export default function ProfRegister() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      sapid: "",
-      password: "",
-      name: "",
-      role: "professor",
-    },
-  });
+const form = useForm<z.infer<typeof formSchema>>({
+  resolver: zodResolver(formSchema),
+  defaultValues: {
+    sapid: "",
+    password: "",
+    name: "",
+    role: "professor",
+    
+  },
+});
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true);
-    console.log(values);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      form.reset();
-    }, 2000);
+async function onSubmit(values: z.infer<typeof formSchema>) {
+  setIsSubmitting(true);
+
+  try {
+    await registerUser({
+      sapid: values.sapid,
+      password: values.password,
+      name: values.name,
+      role: values.role,
+       // TypeScript will now infer that role is "professor"
+    });
+
+    alert("User registered successfully");
+    form.reset();
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    setIsSubmitting(false);
   }
+}
 
   return (
     <div className="flex items-center justify-center min-h-screen w-screen bg-black">
@@ -71,7 +86,7 @@ export default function ProfRegister() {
                     />
                   </FormControl>
                   <FormDescription className="text-black flex justify-start ml-1">
-                    Your unique 12-digit SAP identification number.
+                    Your SAP ID 
                   </FormDescription>
                   <FormMessage className="text-red-500 text-left ml-1" />
                 </FormItem>

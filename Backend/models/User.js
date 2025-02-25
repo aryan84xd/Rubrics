@@ -5,17 +5,9 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     name: { type: String, required: true },
     role: { type: String, enum: ["student", "professor"], required: true },
-    rollNumber: { 
-        type: String, 
-        required: function() { return this.role === "student"; }, 
-        unique: function() { return this.role === "student"; } 
-    },
-    year: { 
-        type: Number, 
-        required: function() { return this.role === "student"; } 
-    }
+    rollNumber: { type: String }, // Not required, checked during registration
+    year: { type: Number }        // Not required, checked during registration
 }, { timestamps: true });
 
 const User = mongoose.model("User", userSchema);
 module.exports = User;
-    
