@@ -2,7 +2,7 @@ const Grade = require("../models/Grade");
 const User = require("../models/User");
 const Assignment = require("../models/Assignment");
 const mongoose = require("mongoose");
-
+const Class = require("../models/Class");
 // ✅ Add a Grade using Assignment ID, Roll Number, and Year
 const addGrade = async (req, res) => {
     try {
@@ -65,6 +65,12 @@ const getGradesByClass = async (req, res) => {
         // ✅ Extract user ID from token (already verified by middleware)
         const studentId = req.user.id;
 
+        // Fetch class details
+        const classDetails = await Class.findById(classObjectId);
+        if (!classDetails) {
+            return res.status(404).json({ message: "Class not found." });
+        }
+
         // Find assignments for the given class
         const assignments = await Assignment.find({ classId: classObjectId });
         const assignmentIds = assignments.map(a => a._id);
@@ -101,7 +107,7 @@ const getGradesByClass = async (req, res) => {
 
         const classAverage = totalAssignments > 0 ? totalScoreSum / totalAssignments : null;
 
-        res.status(200).json({ grades: formattedGrades, classAverage });
+        res.status(200).json({ classDetails, grades: formattedGrades, classAverage });
     } catch (error) {
         console.error("Error fetching grades:", error);
         res.status(500).json({ message: "Server error" });

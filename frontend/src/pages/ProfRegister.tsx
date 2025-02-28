@@ -18,10 +18,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-import { registerUser } from "@/utils/api";
+
+import { registerUser } from "@/utils/api"; // Adjust the path as needed
+import { toast } from "react-toastify"; 
 
 const formSchema = z.object({
-  sapid: z.string().min(6, "SAP ID must be at least 6 characters"),
+  sapid: z.string().min(6, "SAP ID must at least 6 characters"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(2, "Name must be at least 2 characters"),
   role: z.enum(["professor"]),
@@ -30,37 +32,35 @@ const formSchema = z.object({
 export default function ProfRegister() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-const form = useForm<z.infer<typeof formSchema>>({
-  resolver: zodResolver(formSchema),
-  defaultValues: {
-    sapid: "",
-    password: "",
-    name: "",
-    role: "professor",
-    
-  },
-});
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      sapid: "",
+      password: "",
+      name: "",
+      role: "professor",
+    },
+  });
 
-async function onSubmit(values: z.infer<typeof formSchema>) {
-  setIsSubmitting(true);
-
-  try {
-    await registerUser({
-      sapid: values.sapid,
-      password: values.password,
-      name: values.name,
-      role: values.role,
-       // TypeScript will now infer that role is "professor"
-    });
-
-    alert("User registered successfully");
-    form.reset();
-  } catch (error) {
-    alert(error.message);
-  } finally {
-    setIsSubmitting(false);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
+    try {
+      await registerUser(
+        values.sapid,
+        values.password,
+        values.name,
+        values.role
+      );
+      toast.success("Registration successful!");
+      form.reset();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Registration failed"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
-}
 
   return (
     <div className="flex items-center justify-center min-h-screen w-screen bg-black">
@@ -86,7 +86,7 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                     />
                   </FormControl>
                   <FormDescription className="text-black flex justify-start ml-1">
-                    Your SAP ID 
+                    Your unique 12-digit SAP identification number.
                   </FormDescription>
                   <FormMessage className="text-red-500 text-left ml-1" />
                 </FormItem>
@@ -144,8 +144,7 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
               <Link to="/proflogin">
                 <Button variant="outline">Log In</Button>
               </Link>
-              
-            </div>  
+            </div>
           </form>
         </Form>
       </div>

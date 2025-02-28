@@ -1,4 +1,5 @@
-// src/utils/api.ts
+import axios from "axios";
+
 
 interface LoginResponse {
     message: string;
@@ -6,61 +7,53 @@ interface LoginResponse {
     role: string;
     userId: string;
 }
-
-export const loginUser = async (sapid: string, password: string): Promise<LoginResponse> => {
+interface RegisterResponse {
+    message: string;
+}
+const BASE_URL = "http://localhost:8080";
+export const registerUser = async (
+    sapid: string,
+    password: string,
+    name: string,
+    role: string,
+    rollNumber?: string,
+    year?: string
+): Promise<RegisterResponse> => {
     try {
-        console.log("Logging in with SAP ID:", sapid);
-        const response = await fetch("http://localhost:8080/auth/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ sapid, password }),
-            credentials: "include", // Ensures cookies are sent/received
-        });
-        console.log("Response:", response);
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || "Login failed");
-        }
-        console.log("Login successful");
-        return response.json() as Promise<LoginResponse>;
+        console.log("Registering user with SAP ID:", sapid);
+
+        const response = await axios.post<RegisterResponse>(
+            "http://localhost:8080/auth/register",
+            { sapid, password, name, role, rollNumber, year },
+            { withCredentials: true } // Ensures cookies are sent/received
+        );
+
+        console.log("Registration successful", response.data);
+        return response.data;
     } catch (error) {
-        if (error instanceof Error) {
-            throw new Error(error.message);
+        if (axios.isAxiosError(error) && error.response) {
+            throw new Error(error.response.data.message || "Registration failed");
         }
         throw new Error("Something went wrong");
     }
 };
-export async function registerUser({
-  sapid,
-  password,
-  name,
-  role,
-}: {
-  sapid: string;
-  password: string;
-  name: string;
-  role: "professor";
-}) {
-  try {
-    const response = await fetch("/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ sapid, password, name, role }),
-    });
 
-    const data = await response.json();
+export const loginUser = async (sapid: string, password: string): Promise<LoginResponse> => {
+    try {
+        console.log("Logging in with SAP ID:", sapid);
+        
+        const response = await axios.post<LoginResponse>(
+            `${BASE_URL}/auth/login`,
+            { sapid, password },
+            { withCredentials: true } // Ensures cookies are sent/received
+        );
 
-    if (!response.ok) {
-      throw new Error(data.message || "Registration failed");
+        console.log("Login successful", response.data);
+        return response.data;
+    } catch (error) {
+        if (axios.isAxiosError(error) && error.response) {
+            throw new Error(error.response.data.message || "Login failed");
+        }
+        throw new Error("Something went wrong");
     }
-
-    return data;
-  } catch (error) {
-    console.error("Error during registration:", error);
-    throw error;
-  }
-}
+};

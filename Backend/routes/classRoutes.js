@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 const router = express.Router();
 const Assignment = require("../models/Assignment");
 // 📌 Create Class (Professor Only)
-router.post("professor/create", authenticateToken, async (req, res) => {
+router.post("/create", authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== "professor") {
       return res.status(403).json({ message: "Forbidden: Only professors can create classes" });
@@ -90,7 +90,7 @@ router.post("/join", authenticateToken, async (req, res) => {
   }
 });
 
-router.get("/my-classes", authenticateToken, async (req, res) => {
+router.get("/my-classess", authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== "student") {
       return res.status(403).json({ message: "Forbidden: Only students can view their classes" });
