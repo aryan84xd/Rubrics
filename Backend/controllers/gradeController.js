@@ -65,6 +65,12 @@ const getGradesByClass = async (req, res) => {
         // ✅ Extract user ID from token (already verified by middleware)
         const studentId = req.user.id;
 
+        // Fetch student details (all available fields)
+        const studentDetails = await User.findById(studentId).lean();
+        if (!studentDetails) {
+            return res.status(404).json({ message: "Student not found." });
+        }
+
         // Fetch class details
         const classDetails = await Class.findById(classObjectId);
         if (!classDetails) {
@@ -107,12 +113,14 @@ const getGradesByClass = async (req, res) => {
 
         const classAverage = totalAssignments > 0 ? totalScoreSum / totalAssignments : null;
 
-        res.status(200).json({ classDetails, grades: formattedGrades, classAverage });
+        res.status(200).json({ studentDetails, classDetails, grades: formattedGrades, classAverage });
     } catch (error) {
         console.error("Error fetching grades:", error);
         res.status(500).json({ message: "Server error" });
     }
 };
+
+
 
 
 
