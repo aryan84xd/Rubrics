@@ -1,18 +1,11 @@
 const express = require("express");
-const Assignment = require("../models/Assignment");
+const { createAssignment, editAssignment, deleteAssignment } = require("../controllers/assignmentController");
 const authenticateToken = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// Create Assignment
-router.post("/create", authenticateToken, async (req, res) => {
-  if (req.user.role !== "professor") return res.status(403).json({ message: "Forbidden" });
-
-  const { assignmentNumber, title, description, classId, dateOfAssignment } = req.body;
-  const newAssignment = new Assignment({ assignmentNumber, title, description, classId, dateOfAssignment });
-
-  await newAssignment.save();
-  res.json({ message: "Assignment created successfully", assignmentId:newAssignment._id });
-});
+router.post("/create", authenticateToken, createAssignment);
+router.put("/edit/:assignmentId", authenticateToken, editAssignment);
+router.delete("/delete/:assignmentId", authenticateToken, deleteAssignment);
 
 module.exports = router;
