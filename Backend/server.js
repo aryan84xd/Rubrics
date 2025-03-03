@@ -9,6 +9,7 @@ const classRoutes = require("./routes/classRoutes");
 const assignmentRoutes = require("./routes/assignmentRoutes");
 const gradeRoutes = require("./routes/gradeRoutes");
 const pdfRoutes = require("./routes/pdfRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
 dotenv.config();
 const app = express();
 
@@ -29,5 +30,6 @@ app.use("/class", classRoutes);
 app.use("/assignment", assignmentRoutes);
 app.use("/grade", gradeRoutes);
 app.use("/pdf", pdfRoutes);
+app.use("/upload",uploadRoutes)
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
