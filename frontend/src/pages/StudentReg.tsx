@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 //   SelectValue,
 // } from "@/components/ui/select";
 
-import { registerUser } from "@/utils/api"; // Adjust path as needed
+import { registerUser } from "@/utils/Authapi"; // Adjust path as needed
 import { toast } from "react-toastify";
 
 const formSchema = z.object({
@@ -54,11 +54,20 @@ export default function StudentRegister() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      await registerUser(values.sapid, values.password, values.name, values.role, values.rollNumber, values.year);
+      await registerUser(
+        values.sapid,
+        values.password,
+        values.name,
+        values.role,
+        values.rollNumber,
+        values.year
+      );
       toast.success("Registration successful!");
       form.reset();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Registration failed");
+      toast.error(
+        error instanceof Error ? error.message : "Registration failed"
+      );
     } finally {
       setIsSubmitting(false);
     }

@@ -1,5 +1,6 @@
 import type React from "react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,13 +15,13 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import "@/index.css";
-import { loginUser } from "../utils/api";
+import { loginUser } from "../utils/Authapi";
 
 export default function LoginStudent() {
   const [sapid, setSapid] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-
+  const navigate = useNavigate();
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -29,7 +30,7 @@ export default function LoginStudent() {
       try {
         const data = await loginUser(sapid, password);
         console.log("Login successful:", data);
-
+        navigate("/dashboardstudent"); // Redirect to student dashboard
         // Handle successful login, e.g., store token or redirect
       } catch (err: unknown) {
         if (err instanceof Error) {

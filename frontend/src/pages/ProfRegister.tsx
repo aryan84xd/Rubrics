@@ -18,9 +18,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-
-import { registerUser } from "@/utils/api"; // Adjust the path as needed
-import { toast } from "react-toastify"; 
+import { registerUser } from "@/utils/Authapi"; // Adjust the path as needed
+import { toast } from "react-toastify";
 
 const formSchema = z.object({
   sapid: z.string().min(6, "SAP ID must at least 6 characters"),

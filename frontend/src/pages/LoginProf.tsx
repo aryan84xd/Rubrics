@@ -1,7 +1,7 @@
 import type React from "react";
 
 import { useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,32 +17,37 @@ import { AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import "@/index.css";
 
-import { loginUser } from "../utils/api";
+import { loginUser } from "../utils/Authapi";
 
 export default function LoginProf() {
   const [sapid, setSapid] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     if (sapid && password) {
-        try {
-            const data = await loginUser(sapid, password);
-            console.log("Login successful:", data);
-
-            // Handle successful login, e.g., store token or redirect
-        } catch (err: unknown) {
-            if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError("An unexpected error occurred.");
-            }
+      try {
+        const data = await loginUser(sapid, password);
+        console.log("Login successful: Routing", data);
+        if (data?.role === "professor") {
+          navigate("/dashboardprof"); // Redirect to professor dashboard
+        } else {
+          setError("Unauthorized access.");
         }
+        // Handle successful login, e.g., store token or redirect
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("An unexpected error occurred.");
+        }
+      }
     } else {
-        setError("Please enter both SAP ID and password.");
+      setError("Please enter both SAP ID and password.");
     }
   };
 

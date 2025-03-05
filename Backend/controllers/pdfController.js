@@ -35,15 +35,8 @@ const generateRubricPDF = async (req, res) => {
       size: "A4",
     });
 
-    // Set up file stream with error handling
-    const stream = fs.createWriteStream(filePath);
-    stream.on("error", (err) => {
-      console.error("Stream error:", err);
-      return res
-        .status(500)
-        .json({ message: "Error creating PDF file stream" });
-    });
-
+    // Pipe the PDF content to a file stream
+    const stream = fs.createWriteStream(filePath); // Declare `stream` here
     doc.pipe(stream);
 
     // **Step 2: Draw border around entire page**
@@ -398,43 +391,48 @@ const generateRubricPDF = async (req, res) => {
 
       currentX += colWidth[j];
     }
-// Create Date of Assignment row
-currentY += rowHeight;
-currentX = tableLeft;
+    // Create Date of Assignment row
+    currentY += rowHeight;
+    currentX = tableLeft;
 
-doc.rect(currentX, currentY, colWidth[0], rowHeight).stroke();
-doc
-  .font("Helvetica-Bold")
-  .fontSize(7)
-  .text("Date", currentX + 5, currentY + 8, { width: colWidth[0] - 10, align: "center" });
-currentX += colWidth[0];
+    doc.rect(currentX, currentY, colWidth[0], rowHeight).stroke();
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(7)
+      .text("Date", currentX + 5, currentY + 8, {
+        width: colWidth[0] - 10,
+        align: "center",
+      });
+    currentX += colWidth[0];
 
-// Draw date cells for each column
-for (let j = 1; j <= 10; j++) {
-  doc.rect(currentX, currentY, colWidth[j], rowHeight).stroke();
+    // Draw date cells for each column
+    for (let j = 1; j <= 10; j++) {
+      doc.rect(currentX, currentY, colWidth[j], rowHeight).stroke();
 
-  // Add formatted date if available
-  if (j <= data.grades.length) {
-    const grade = data.grades[j - 1];
-    if (grade && grade.dateOfAssignment) {
-      const date = new Date(grade.dateOfAssignment);
-      const formattedDate = `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
-        .toString()
-        .padStart(2, "0")}/${date.getFullYear().toString().slice(-2)}`; // DD/MM/YY format
+      // Add formatted date if available
+      if (j <= data.grades.length) {
+        const grade = data.grades[j - 1];
+        if (grade && grade.dateOfAssignment) {
+          const date = new Date(grade.dateOfAssignment);
+          const formattedDate = `${date
+            .getDate()
+            .toString()
+            .padStart(2, "0")}/${(date.getMonth() + 1)
+            .toString()
+            .padStart(2, "0")}/${date.getFullYear().toString().slice(-2)}`; // DD/MM/YY format
 
-      doc
-        .font("Helvetica")
-        .fontSize(6.5) // Slightly reduced font size
-        .text(formattedDate, currentX, currentY + 9, {
-          width: colWidth[j], // Use full column width
-          align: "center",
-        });
+          doc
+            .font("Helvetica")
+            .fontSize(6.5) // Slightly reduced font size
+            .text(formattedDate, currentX, currentY + 9, {
+              width: colWidth[j], // Use full column width
+              align: "center",
+            });
+        }
+      }
+
+      currentX += colWidth[j];
     }
-  }
-
-  currentX += colWidth[j];
-}
-
 
     // Create signature row
     currentY += rowHeight;

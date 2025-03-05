@@ -1,7 +1,4 @@
-import AppRoutes from "./routes/AppRoutes";
-// import "./globals.css"
 import "./index.css";
-import Login from "./pages/LoginProf";
 import {
   BrowserRouter as Router,
   Routes,
@@ -13,48 +10,36 @@ import LoginProf from "./pages/LoginProf";
 import LoginStudent from "./pages/LoginStudent";
 import ProfRegister from "./pages/ProfRegister";
 import StudentRegister from "./pages/StudentReg";
-import RubricsDisplay from "./pages/RubricsDisplay";
-import RubricsPage from "./pages/RubricsPage";
+import DashboardProf from "./pages/DashboardProf";
+import DashboardStudent from "./pages/DashboardStudent";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
   return (
-    <>
-      <div>
-        <Router>
-          <div className="content-container">
-            <Routes>
-              <Route path="*" element={<Navigate to="/loginprof" />} />
-              <Route path="/loginprof" element={<LoginProf />} />
-              <Route path="/loginstudent" element={<LoginStudent />} />
-              <Route path="/regprof" element={<ProfRegister />} />
-              <Route path="/regstudent" element={<StudentRegister />} />
-              <Route path="/rubrics" element={<RubricsPage />} />
-              {/* <Route path="/rubrics" element={<RubricsDisplay />} /> */}
-
-              {/* <Route
-                path="/rubrics"
-                element={
-                  <RubricsDisplay
-                    entry={{
-                      assignmentId: "A101",
-                      rollNumber: "2024123",
-                      year: 2024,
-                      knowledge: 4,
-                      description: 3,
-                      demonstration: 5,
-                      strategy: 4,
-                      attitude: 5,
-                    }}
-                  />
-                }
-              /> */}
-
-              {/* <Route path="/main" element={<MainLayout/>} /> */}
-            </Routes>
-          </div>
-        </Router>
-      </div>
-    </>
-    // return <AppRoutes />
+    <Router>
+      <Routes>
+        <Route path="*" element={<Navigate to="/loginprof" />} />
+        <Route path="/loginprof" element={<LoginProf />} />
+        <Route path="/loginstudent" element={<LoginStudent />} />
+        <Route path="/regprof" element={<ProfRegister />} />
+        <Route path="/regstudent" element={<StudentRegister />} />
+        <Route
+          path="/dashboardprof"
+          element={
+            <ProtectedRoute allowedRoles={["professor"]}>
+              <DashboardProf />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboardstudent"
+          element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <DashboardStudent />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Router>
   );
 }

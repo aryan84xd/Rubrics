@@ -1,25 +1,18 @@
+/* index.css or App.css */
+html, body, #root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-.wmax{
-    width: 100%;
-  }
-  
-  #root {
-    /* max-width: 1280px; */
-    margin: 0 auto;
-    padding: 0rem;
-    text-align: center;
-  }
-  
-  
-  .hmax{
-    height: 100%;
-  }
-  
-  .hvh{
-    height: 100vh;
-  }
-  
-  .h1000{
-    height: 1000px;
-  }
-  
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}

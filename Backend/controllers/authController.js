@@ -104,3 +104,32 @@ exports.logout = (req, res) => {
   res.clearCookie("token");
   res.json({ message: "Logged out successfully" });
 };
+
+exports.verifyToken = (req, res) => {
+  try {
+    const token = req.cookies.token; // 🔹 Read from cookies
+    if (!token) return res.status(401).json({ message: "Unauthorized" });
+    console.log(token);
+    const decoded = jwt.verify(token, SECRET_KEY);
+    res.status(200).json({ message: "Authenticated", user: decoded });
+  } catch (error) {
+    res.status(401).json({ message: "Invalid token" });
+  }
+};
+
+exports.getUserDetails = async (req, res) => {
+  try {
+    const token = req.cookies.token; // 🔹 Extract token from cookies
+    if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+    const decoded = jwt.verify(token, SECRET_KEY); // 🔹 Verify token
+    const user = await User.findById(decoded.id).select("-password"); // Exclude password from response
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error("Get User Details Error:", error);
+    res.status(401).json({ message: "Invalid token" });
+  }
+};
