@@ -123,8 +123,7 @@ export const getGradesForAssignment = async (classId: string, assignmentId: stri
 // 🔹 Add a Grade
 export const addGrade = async (gradeData: {
   assignmentId: string;
-  rollNumber: string;
-  year: number;
+  sapid: string;
   knowledge: number;
   description: number;
   demonstration: number;

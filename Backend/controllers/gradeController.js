@@ -6,17 +6,17 @@ const Class = require("../models/Class");
 // ✅ Add a Grade using Assignment ID, Roll Number, and Year
 const addGrade = async (req, res) => {
     try {
-        const { assignmentId, rollNumber, year, knowledge, description, demonstration, strategy, attitude } = req.body;
+        const { assignmentId, sapid, knowledge, description, demonstration, strategy, attitude } = req.body;
 
-        if (!assignmentId || !rollNumber || !year) {
-            return res.status(400).json({ message: "Assignment ID, Roll Number, and Year are required." });
+        if (!assignmentId || !sapid) {
+            return res.status(400).json({ message: "Assignment ID and SAP ID are required." });
         }
 
-        // Find student by rollNumber and year
-        const student = await User.findOne({ rollNumber, year, role: "student" });
+        // Find student by sapid
+        const student = await User.findOne({ sapid, role: "student" });
 
         if (!student) {
-            return res.status(404).json({ message: "Student not found with this Roll Number and Year." });
+            return res.status(404).json({ message: "Student not found with this SAP ID." });
         }
 
         // Check if a grade already exists for this student and assignment

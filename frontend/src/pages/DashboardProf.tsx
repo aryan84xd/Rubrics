@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   fetchStudentDetails,
@@ -15,7 +15,7 @@ import {
   getClassAssignments,
   getGradesForAssignment,
   getClassDetails,
-  addGrade
+  addGrade,
 } from "@/utils/ProffApi";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,9 +35,10 @@ const DashboardProf = () => {
     description: 0,
     demonstration: 0,
     strategy: 0,
-    attitude: 0
+    attitude: 0,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const mainRef = useRef(null); // Reference for main section
 
   useEffect(() => {
     getProfClasses().then((data) => setClasses(data.classes));
@@ -49,11 +50,11 @@ const DashboardProf = () => {
     setAssignmentDetails(null);
     setStudents([]);
     setGrades({});
-    
+
     try {
       const assignmentData = await getClassAssignments(classId);
       setAssignments(assignmentData.assignments);
-      
+
       const classDetails = await getClassDetails(classId);
       setStudents(classDetails.students);
     } catch (error) {
@@ -64,19 +65,19 @@ const DashboardProf = () => {
   const handleAssignmentSelect = async (assignment) => {
     setSelectedAssignment(assignment._id);
     setAssignmentDetails(assignment);
-    
+
     if (!students.length) {
       console.error("No students available");
       return;
     }
-  
+
     try {
       const data = await getGradesForAssignment(selectedClass, assignment._id);
       console.log("Grades data:", data);
-      
+
       // Process the grades into a lookup object by student sapid
       const gradesMap = {};
-      data.grades.forEach(grade => {
+      data.grades.forEach((grade) => {
         const studentId = grade.studentId.sapid;
         gradesMap[studentId] = {
           knowledge: grade.knowledge,
@@ -84,10 +85,15 @@ const DashboardProf = () => {
           demonstration: grade.demonstration,
           strategy: grade.strategy,
           attitude: grade.attitude,
-          total: grade.knowledge + grade.description + grade.demonstration + grade.strategy + grade.attitude
+          total:
+            grade.knowledge +
+            grade.description +
+            grade.demonstration +
+            grade.strategy +
+            grade.attitude,
         };
       });
-      
+
       setGrades(gradesMap);
     } catch (error) {
       console.error("Error fetching grades:", error);
@@ -101,7 +107,7 @@ const DashboardProf = () => {
       description: 0,
       demonstration: 0,
       strategy: 0,
-      attitude: 0
+      attitude: 0,
     });
     setIsGradeDialogOpen(true);
   };
@@ -110,38 +116,39 @@ const DashboardProf = () => {
     // Ensure the value is within 0-5 range
     const numValue = parseInt(value);
     const validValue = isNaN(numValue) ? 0 : Math.min(Math.max(numValue, 0), 5);
-    
+
     setGradeForm({
       ...gradeForm,
-      [field]: validValue
+      [field]: validValue,
     });
   };
 
   const handleSubmitGrade = async () => {
     if (!selectedStudent || !selectedAssignment || !assignmentDetails) return;
-    
+
     setIsSubmitting(true);
-    
+    console.log(selectedStudent);
+    console.log(selectedStudent.sapid, selectedAssignment, gradeForm);
+
     try {
       const gradeData = {
         assignmentId: selectedAssignment,
-        rollNumber: selectedStudent.rollNumber,
-        year: new Date().getFullYear(),
-        ...gradeForm
+        sapid: selectedStudent.sapid,
+        ...gradeForm,
       };
-      
+
       const response = await addGrade(gradeData);
       console.log("Grade added:", response);
-      
+
       // Update the grades state
-      setGrades(prev => ({
+      setGrades((prev) => ({
         ...prev,
         [selectedStudent.sapid]: {
           ...gradeForm,
-          total: Object.values(gradeForm).reduce((sum, val) => sum + val, 0)
-        }
+          total: Object.values(gradeForm).reduce((sum, val) => sum + val, 0),
+        },
       }));
-      
+
       setIsGradeDialogOpen(false);
     } catch (error) {
       console.error("Error submitting grade:", error);
@@ -150,16 +157,20 @@ const DashboardProf = () => {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 w-full">
       <header className="sticky top-0 z-10 flex items-center justify-between bg-white shadow-md px-6 py-4 w-full">
-        <h1 className="text-2xl font-bold text-gray-800">Professor Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-800">
+          Professor Dashboard
+        </h1>
       </header>
 
       <div className="flex flex-1 w-full">
         <aside className="w-1/5 bg-white border-r shadow-sm p-4 overflow-y-auto">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">Your Classes</h2>
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">
+            Your Classes
+          </h2>
           <Separator className="mb-4" />
           {classes.map((cls) => (
             <Button
@@ -176,58 +187,99 @@ const DashboardProf = () => {
           ))}
         </aside>
 
-        <main className="w-4/5 bg-gray-50 p-6 overflow-y-auto">
+        <main ref={mainRef} className="w-4/5 bg-gray-50 p-6 overflow-y-auto">
           {selectedClass ? (
             <div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Assignments</h2>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                Assignments
+              </h2>
               <div className="flex gap-2 mb-6 flex-wrap">
                 {assignments.map((assignment) => (
                   <Button
                     key={assignment._id}
-                    variant={selectedAssignment === assignment._id ? "secondary" : "outline"}
+                    variant={
+                      selectedAssignment === assignment._id
+                        ? "secondary"
+                        : "outline"
+                    }
                     onClick={() => handleAssignmentSelect(assignment)}
                   >
                     Assignment {assignment.assignmentNumber}
                   </Button>
                 ))}
               </div>
-              
+
               {assignmentDetails && (
                 <Card className="mb-6">
                   <CardHeader>
                     <CardTitle>{assignmentDetails.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="mb-2"><strong>Assignment Number:</strong> {assignmentDetails.assignmentNumber}</p>
-                    <p className="mb-2"><strong>Description:</strong> {assignmentDetails.description}</p>
-                    <p><strong>Date of Assignment:</strong> {new Date(assignmentDetails.dateOfAssignment).toLocaleDateString()}</p>
+                    <p className="mb-2">
+                      <strong>Assignment Number:</strong>{" "}
+                      {assignmentDetails.assignmentNumber}
+                    </p>
+                    <p className="mb-2">
+                      <strong>Description:</strong>{" "}
+                      {assignmentDetails.description}
+                    </p>
+                    <p>
+                      <strong>Date of Assignment:</strong>{" "}
+                      {new Date(
+                        assignmentDetails.dateOfAssignment
+                      ).toLocaleDateString()}
+                    </p>
                   </CardContent>
                 </Card>
               )}
-              
+
               {selectedAssignment && (
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-800 mb-4">Students & Grades</h2>
+                  <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                    Students & Grades
+                  </h2>
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse border border-gray-300">
                       <thead>
                         <tr className="bg-gray-200">
-                          <th className="border border-gray-300 px-4 py-2">Sapid</th>
-                          <th className="border border-gray-300 px-4 py-2">Name</th>
-                          <th className="border border-gray-300 px-4 py-2">Knowledge</th>
-                          <th className="border border-gray-300 px-4 py-2">Description</th>
-                          <th className="border border-gray-300 px-4 py-2">Demonstration</th>
-                          <th className="border border-gray-300 px-4 py-2">Strategy</th>
-                          <th className="border border-gray-300 px-4 py-2">Attitude</th>
-                          <th className="border border-gray-300 px-4 py-2">Total Grade</th>
-                          <th className="border border-gray-300 px-4 py-2">Actions</th>
+                          <th className="border border-gray-300 px-4 py-2">
+                            Sapid
+                          </th>
+                          <th className="border border-gray-300 px-4 py-2">
+                            Name
+                          </th>
+                          <th className="border border-gray-300 px-4 py-2">
+                            Knowledge
+                          </th>
+                          <th className="border border-gray-300 px-4 py-2">
+                            Description
+                          </th>
+                          <th className="border border-gray-300 px-4 py-2">
+                            Demonstration
+                          </th>
+                          <th className="border border-gray-300 px-4 py-2">
+                            Strategy
+                          </th>
+                          <th className="border border-gray-300 px-4 py-2">
+                            Attitude
+                          </th>
+                          <th className="border border-gray-300 px-4 py-2">
+                            Total Grade
+                          </th>
+                          <th className="border border-gray-300 px-4 py-2">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
                         {students.map((student) => (
                           <tr key={student._id} className="bg-white">
-                            <td className="border border-gray-300 px-4 py-2">{student.sapid}</td>
-                            <td className="border border-gray-300 px-4 py-2">{student.name}</td>
+                            <td className="border border-gray-300 px-4 py-2">
+                              {student.sapid}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-2">
+                              {student.name}
+                            </td>
                             <td className="border border-gray-300 px-4 py-2 text-center">
                               {grades[student.sapid]?.knowledge ?? "N/A"}
                             </td>
@@ -248,8 +300,8 @@ const DashboardProf = () => {
                             </td>
                             <td className="border border-gray-300 px-4 py-2 text-center">
                               {!grades[student.sapid] && (
-                                <Button 
-                                  variant="outline" 
+                                <Button
+                                  variant="outline"
                                   size="sm"
                                   onClick={() => handleOpenGradeDialog(student)}
                                 >
@@ -268,9 +320,12 @@ const DashboardProf = () => {
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
               <div className="bg-white p-8 rounded-lg shadow-md text-center">
-                <p className="text-lg mb-4">Select a class to view assignments</p>
+                <p className="text-lg mb-4">
+                  Select a class to view assignments
+                </p>
                 <p className="text-sm text-gray-400">
-                  Choose a class from the sidebar to see assignments and student grades
+                  Choose a class from the sidebar to see assignments and student
+                  grades
                 </p>
               </div>
             </div>
@@ -278,15 +333,13 @@ const DashboardProf = () => {
         </main>
       </div>
 
-      {/* Grading Dialog */}
+      {/* Dialog Component */}
       <Dialog open={isGradeDialogOpen} onOpenChange={setIsGradeDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 transform-none sm:max-w-md bg-background p-6 border rounded-lg shadow-lg">
           <DialogHeader>
-            <DialogTitle>
-              Grade Student: {selectedStudent?.name}
-            </DialogTitle>
+            <DialogTitle>Grade Student: {selectedStudent?.name}</DialogTitle>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="knowledge" className="text-right">
@@ -299,10 +352,12 @@ const DashboardProf = () => {
                 max="5"
                 className="col-span-3"
                 value={gradeForm.knowledge}
-                onChange={(e) => handleGradeInputChange('knowledge', e.target.value)}
+                onChange={(e) =>
+                  handleGradeInputChange("knowledge", e.target.value)
+                }
               />
             </div>
-            
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="description" className="text-right">
                 Description (0-5)
@@ -314,10 +369,12 @@ const DashboardProf = () => {
                 max="5"
                 className="col-span-3"
                 value={gradeForm.description}
-                onChange={(e) => handleGradeInputChange('description', e.target.value)}
+                onChange={(e) =>
+                  handleGradeInputChange("description", e.target.value)
+                }
               />
             </div>
-            
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="demonstration" className="text-right">
                 Demonstration (0-5)
@@ -329,10 +386,12 @@ const DashboardProf = () => {
                 max="5"
                 className="col-span-3"
                 value={gradeForm.demonstration}
-                onChange={(e) => handleGradeInputChange('demonstration', e.target.value)}
+                onChange={(e) =>
+                  handleGradeInputChange("demonstration", e.target.value)
+                }
               />
             </div>
-            
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="strategy" className="text-right">
                 Strategy (0-5)
@@ -341,13 +400,15 @@ const DashboardProf = () => {
                 id="strategy"
                 type="number"
                 min="0"
-                max="5" 
+                max="5"
                 className="col-span-3"
                 value={gradeForm.strategy}
-                onChange={(e) => handleGradeInputChange('strategy', e.target.value)}
+                onChange={(e) =>
+                  handleGradeInputChange("strategy", e.target.value)
+                }
               />
             </div>
-            
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="attitude" className="text-right">
                 Attitude (0-5)
@@ -359,27 +420,32 @@ const DashboardProf = () => {
                 max="5"
                 className="col-span-3"
                 value={gradeForm.attitude}
-                onChange={(e) => handleGradeInputChange('attitude', e.target.value)}
+                onChange={(e) =>
+                  handleGradeInputChange("attitude", e.target.value)
+                }
               />
             </div>
-            
+
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right font-bold">
-                Total
-              </Label>
+              <Label className="text-right font-bold">Total</Label>
               <div className="col-span-3 font-bold">
-                {Object.values(gradeForm).reduce((sum, val) => sum + val, 0)} / 25
+                {Object.values(gradeForm).reduce((sum, val) => sum + val, 0)} /
+                25
               </div>
             </div>
           </div>
-          
+
           <DialogFooter>
-            <Button type="button" variant="secondary" onClick={() => setIsGradeDialogOpen(false)}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setIsGradeDialogOpen(false)}
+            >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              onClick={handleSubmitGrade} 
+            <Button
+              type="submit"
+              onClick={handleSubmitGrade}
               disabled={isSubmitting}
             >
               {isSubmitting ? "Submitting..." : "Submit Grade"}
