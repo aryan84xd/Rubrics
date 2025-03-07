@@ -76,6 +76,7 @@ export default function DashboardStudent() {
 
   const handleLogout = () => {
     navigate("/loginprof");
+      
   };
 
   return (

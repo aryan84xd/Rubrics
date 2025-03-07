@@ -85,6 +85,7 @@ interface GradesResponse {
 }
 
 
+
 const BASE_URL = "http://localhost:8080";
 
 const api = axios.create({
@@ -163,3 +164,5 @@ export const generateRubrics = async (classId: string): Promise<void> => {
       throw new Error("Failed to fetch grades");
     }
   };
+ 
+  

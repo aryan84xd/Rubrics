@@ -51,6 +51,7 @@ interface Grade {
   total: number;
 }
 
+
 // 🔹 API Functions
 
 // Get logged-in user details
@@ -137,5 +138,37 @@ export const addGrade = async (gradeData: {
   } catch (error) {
     console.error("Error adding grade:", error);
     throw new Error("Failed to add grade");
+  }
+};
+export const createClass = async (classData: {
+  name: string;
+  facultyName: string;
+  courseCode: string;
+  year: string;
+  semester: string;
+  batch: string;
+  department: string;
+  academicYear: string;
+}): Promise<any> => {
+  try {
+    const response = await api.post("/class", classData);
+    return response.data;
+  } catch (error) {
+    throw new Error("Failed to create class");
+  }
+};
+
+export const createAssignment = async (assignmentData: {
+  classId: string;
+  assignmentNumber: number;
+  title: string;
+  description: string;
+  dateOfAssignment: string;
+}): Promise<any> => {
+  try {
+    const response = await api.post("/assignment", assignmentData);
+    return response.data;
+  } catch  {
+    throw new Error("Failed to create assignment");
   }
 };
