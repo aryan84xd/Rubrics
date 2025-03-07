@@ -51,7 +51,6 @@ interface Grade {
   total: number;
 }
 
-
 // 🔹 API Functions
 
 // Get logged-in user details
@@ -68,7 +67,9 @@ export const fetchUserDetails = async (): Promise<{ user: UserInfo }> => {
 // Get professor's classes
 export const getProfClasses = async (): Promise<{ classes: ClassInfo[] }> => {
   try {
-    const response = await api.get<{ classes: ClassInfo[] }>("/class/my-classes");
+    const response = await api.get<{ classes: ClassInfo[] }>(
+      "/class/my-classes"
+    );
     console.log("Professor's classes fetched:", response.data);
     return response.data;
   } catch {
@@ -77,9 +78,13 @@ export const getProfClasses = async (): Promise<{ classes: ClassInfo[] }> => {
 };
 
 // Get class assignments
-export const getClassAssignments = async (classId: string): Promise<{ assignments: Assignment[] }> => {
+export const getClassAssignments = async (
+  classId: string
+): Promise<{ assignments: Assignment[] }> => {
   try {
-    const response = await api.get<{ assignments: Assignment[] }>(`/class/${classId}/assignments`);
+    const response = await api.get<{ assignments: Assignment[] }>(
+      `/class/${classId}/assignments`
+    );
     console.log("Assignments fetched:", response.data);
     return response.data;
   } catch {
@@ -88,9 +93,13 @@ export const getClassAssignments = async (classId: string): Promise<{ assignment
 };
 
 // Get class details & students
-export const getClassDetails = async (classId: string): Promise<{ class: ClassInfo; students: UserInfo[] }> => {
+export const getClassDetails = async (
+  classId: string
+): Promise<{ class: ClassInfo; students: UserInfo[] }> => {
   try {
-    const response = await api.get<{ class: ClassInfo; students: UserInfo[] }>(`/class/${classId}`);
+    const response = await api.get<{ class: ClassInfo; students: UserInfo[] }>(
+      `/class/${classId}`
+    );
     console.log("Class details fetched:", response.data);
     return response.data;
   } catch {
@@ -99,9 +108,14 @@ export const getClassDetails = async (classId: string): Promise<{ class: ClassIn
 };
 
 // Get grades for a student in a class
-export const getGradesByClass = async (classId: string): Promise<{ grades: Grade[]; classAverage: number | null }> => {
+export const getGradesByClass = async (
+  classId: string
+): Promise<{ grades: Grade[]; classAverage: number | null }> => {
   try {
-    const response = await api.get<{ grades: Grade[]; classAverage: number | null }>(`/grade/class/${classId}`);
+    const response = await api.get<{
+      grades: Grade[];
+      classAverage: number | null;
+    }>(`/grade/class/${classId}`);
     console.log("Grades fetched:", response.data);
     return response.data;
   } catch {
@@ -110,9 +124,14 @@ export const getGradesByClass = async (classId: string): Promise<{ grades: Grade
 };
 
 // Get grades for a specific assignment in a class
-export const getGradesForAssignment = async (classId: string, assignmentId: string): Promise<{ grades: Grade[] }> => {
+export const getGradesForAssignment = async (
+  classId: string,
+  assignmentId: string
+): Promise<{ grades: Grade[] }> => {
   try {
-    const response = await api.get<{ grades: Grade[] }>(`/assignment/class/${classId}/assignment/${assignmentId}`);
+    const response = await api.get<{ grades: Grade[] }>(
+      `/assignment/class/${classId}/assignment/${assignmentId}`
+    );
     console.log("Grades fetched:", response.data);
     return response.data;
   } catch (error) {
@@ -132,7 +151,10 @@ export const addGrade = async (gradeData: {
   attitude: number;
 }): Promise<{ message: string; grade: Grade }> => {
   try {
-    const response = await api.post<{ message: string; grade: Grade }>("/grade/add", gradeData);
+    const response = await api.post<{ message: string; grade: Grade }>(
+      "/grade/add",
+      gradeData
+    );
     console.log("Grade added successfully:", response.data);
     return response.data;
   } catch (error) {
@@ -151,10 +173,10 @@ export const createClass = async (classData: {
   academicYear: string;
 }): Promise<any> => {
   try {
-    const response = await api.post("/class", classData);
+    const response = await api.post("/class/create", classData);
     return response.data;
-  } catch (error) {
-    throw new Error("Failed to create class");
+  } catch (error: any) {
+    throw new Error(`Failed to create class: ${error.message}`);
   }
 };
 
@@ -166,9 +188,33 @@ export const createAssignment = async (assignmentData: {
   dateOfAssignment: string;
 }): Promise<any> => {
   try {
-    const response = await api.post("/assignment", assignmentData);
+    const response = await api.post("/assignment/create", assignmentData);
     return response.data;
-  } catch  {
-    throw new Error("Failed to create assignment");
+  } catch (error: any) {
+    throw new Error(`Failed to create assignment: ${error.message}`);
+  }
+};
+// Add to ProffApi.ts
+export const uploadStudentsToClass = async (
+  classId: string,
+  file: File
+): Promise<{ message: string }> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const response = await api.post(
+      `/upload/upload-students/${classId}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Upload failed:", error);
+    throw new Error("Failed to upload students");
   }
 };

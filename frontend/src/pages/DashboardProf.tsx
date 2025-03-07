@@ -1,13 +1,25 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   getProfClasses,
   getClassAssignments,
   getGradesForAssignment,
   getClassDetails,
   addGrade,
+  createClass,
+  createAssignment,
 } from "@/utils/ProffApi";
-
-// Import our new components
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+// Import our components
 import Header from "@/components/Header";
 import ClassSidebar from "@/components/ClassSidebar";
 import AssignmentSelection from "@/components/AssignmentSelection";
@@ -15,11 +27,15 @@ import AssignmentDetailsCard from "@/components/AssignmentDetailsCard";
 import StudentGradesTable from "@/components/StudentGradesTable";
 import GradeDialog from "@/components/GradeDialog";
 import EmptyState from "@/components/EmptyState";
-
+import CreateClassDialog from "@/components/CreateClassDialog";
+import CreateAssignmentDialog from "@/components/CreateAssignmentDialog";
+import { uploadStudentsToClass, fetchUserDetails } from "@/utils/ProffApi";
 // TypeScript Interfaces
 interface Professor {
+  _id: string;
   name: string;
-  id?: string;
+  sapid?: string;
+  role: string;
 }
 
 interface Class {
@@ -64,8 +80,12 @@ const DashboardProf: React.FC = () => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [selectedAssignment, setSelectedAssignment] = useState<string | null>(null);
-  const [assignmentDetails, setAssignmentDetails] = useState<Assignment | null>(null);
+  const [selectedAssignment, setSelectedAssignment] = useState<string | null>(
+    null
+  );
+  const [assignmentDetails, setAssignmentDetails] = useState<Assignment | null>(
+    null
+  );
   const [students, setStudents] = useState<Student[]>([]);
   const [grades, setGrades] = useState<Record<string, Grade>>({});
   const [isGradeDialogOpen, setIsGradeDialogOpen] = useState(false);
@@ -77,28 +97,53 @@ const DashboardProf: React.FC = () => {
     strategy: 0,
     attitude: 0,
   });
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const mainRef = useRef<HTMLElement>(null);
+  const [isLoadingAssignments, setIsLoadingAssignments] = useState(false);
+  const Navigate = useNavigate();
+  // New state variables for create dialogs
+  const [isCreateClassDialogOpen, setIsCreateClassDialogOpen] = useState(false);
+  const [isCreateAssignmentDialogOpen, setIsCreateAssignmentDialogOpen] =
+    useState(false);
 
+  const mainRef = useRef<HTMLElement>(null);
   useEffect(() => {
-    // Mock professor data - in a real app, you would fetch this
-    setProfessor({
-      name: "Dr. Jane Smith",
-      id: "PROF123"
-    });
-    
-    getProfClasses().then((data) => setClasses(data.classes));
+    const fetchProfessorData = async () => {
+      try {
+        const userData = await fetchUserDetails();
+        setProfessor({
+          name: userData.user.name,
+          id: userData.user._id,
+          sapid: userData.user.sapid,
+        });
+      } catch (error) {
+        console.error("Error fetching professor details:", error);
+        // Handle error (e.g., redirect to login)
+      }
+    };
+
+    fetchProfessorData();
+    fetchClasses();
   }, []);
 
+  const fetchClasses = async () => {
+    try {
+      const data = await getProfClasses();
+      setClasses(data.classes);
+    } catch (error) {
+      console.error("Error fetching classes:", error);
+    }
+  };
+
   const handleLogout = () => {
-    // Handle logout logic
-    console.log("Logging out...");
-    // In a real app, you would call an API or clear auth tokens
-    // window.location.href = "/login";
+   Navigate("/loginprof");
   };
 
   const handleClassSelect = async (classId: string) => {
+    setIsLoadingAssignments(true);
     setSelectedClass(classId);
+    setAssignments([]);
     setSelectedAssignment(null);
     setAssignmentDetails(null);
     setStudents([]);
@@ -112,6 +157,8 @@ const DashboardProf: React.FC = () => {
       setStudents(classDetails.students);
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsLoadingAssignments(false);
     }
   };
 
@@ -125,7 +172,10 @@ const DashboardProf: React.FC = () => {
     }
 
     try {
-      const data = await getGradesForAssignment(selectedClass as string, assignment._id);
+      const data = await getGradesForAssignment(
+        selectedClass as string,
+        assignment._id
+      );
       console.log("Grades data:", data);
 
       // Process the grades into a lookup object by student sapid
@@ -209,36 +259,172 @@ const DashboardProf: React.FC = () => {
     }
   };
 
+  // New handlers for create class functionality
+  const handleCreateClassClick = () => {
+    setIsCreateClassDialogOpen(true);
+  };
+
+  const handleSubmitClass = async (classData: {
+    name: string;
+    facultyName: string;
+    courseCode: string;
+    year: string;
+    semester: string;
+    batch: string;
+    department: string;
+    academicYear: string;
+  }) => {
+    setIsSubmitting(true);
+
+    try {
+      const response = await createClass(classData);
+      console.log("Class created:", response);
+
+      // Refresh the classes list
+      await fetchClasses();
+      setSelectedClass(response._id); // 🔹 Auto-select the new class
+      setAssignments([]);
+
+      setIsCreateClassDialogOpen(false);
+    } catch (error) {
+      console.error("Error creating class:", error);
+      alert("Failed to create class. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // New handlers for create assignment functionality
+  const handleCreateAssignmentClick = () => {
+    if (!selectedClass) {
+      alert("Please select a class first.");
+      return;
+    }
+    setIsCreateAssignmentDialogOpen(true);
+  };
+
+  const handleSubmitAssignment = async (assignmentData: {
+    classId: string;
+    assignmentNumber: number;
+    title: string;
+    description: string;
+    dateOfAssignment: string;
+  }) => {
+    setIsSubmitting(true);
+
+    try {
+      const response = await createAssignment(assignmentData);
+      console.log("Assignment created:", response);
+
+      // Refresh assignments for the selected class
+      if (selectedClass) {
+        const assignmentData = await getClassAssignments(selectedClass);
+        setAssignments(assignmentData.assignments);
+      }
+
+      setIsCreateAssignmentDialogOpen(false);
+    } catch (error) {
+      console.error("Error creating assignment:", error);
+      alert("Failed to create assignment. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const handleUploadStudents = async () => {
+    if (!selectedClass || !selectedFile) return;
+
+    setIsSubmitting(true);
+    try {
+      await uploadStudentsToClass(selectedClass, selectedFile);
+      // Refresh students list
+      const classDetails = await getClassDetails(selectedClass);
+      setStudents(classDetails.students);
+      alert("Students uploaded successfully!");
+      setIsUploadDialogOpen(false);
+      setSelectedFile(null);
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Failed to upload students. Please check the file format.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 w-full">
-      <Header 
-        professor={professor || undefined} 
-        onLogout={handleLogout} 
+      <Header
+        professor={professor || { name: "Loading...", id: "" }}
+        onLogout={handleLogout}
       />
 
       <div className="flex flex-1 w-full">
-        <ClassSidebar 
-          classes={classes} 
-          selectedClass={selectedClass} 
-          onClassSelect={handleClassSelect} 
+        <ClassSidebar
+          classes={classes}
+          selectedClass={selectedClass}
+          onClassSelect={handleClassSelect}
+          onCreateClassClick={handleCreateClassClick}
         />
 
         <main ref={mainRef} className="w-4/5 bg-gray-50 p-6 overflow-y-auto">
           {selectedClass ? (
             <div>
-              <AssignmentSelection 
-                assignments={assignments} 
-                selectedAssignment={selectedAssignment} 
-                onAssignmentSelect={handleAssignmentSelect} 
+              {isUploadDialogOpen && (
+                <Dialog
+                  open={isUploadDialogOpen}
+                  onOpenChange={setIsUploadDialogOpen}
+                >
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Upload Students</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid items-center gap-2">
+                        <Label htmlFor="studentFile">Excel File</Label>
+                        <Input
+                          id="studentFile"
+                          type="file"
+                          accept=".xlsx,.xls"
+                          onChange={(e) =>
+                            setSelectedFile(e.target.files?.[0] || null)
+                          }
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Supported formats: .xlsx, .xls
+                        </p>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsUploadDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleUploadStudents}
+                        disabled={!selectedFile || isSubmitting}
+                      >
+                        {isSubmitting ? "Uploading..." : "Upload"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+              <AssignmentSelection
+                assignments={assignments}
+                selectedAssignment={selectedAssignment}
+                onAssignmentSelect={handleAssignmentSelect}
+                onCreateAssignmentClick={handleCreateAssignmentClick}
+                onUploadStudents={() => setIsUploadDialogOpen(true)}
               />
 
               <AssignmentDetailsCard assignmentDetails={assignmentDetails} />
 
               {selectedAssignment && (
-                <StudentGradesTable 
-                  students={students} 
-                  grades={grades} 
-                  onOpenGradeDialog={handleOpenGradeDialog} 
+                <StudentGradesTable
+                  students={students}
+                  grades={grades}
+                  onOpenGradeDialog={handleOpenGradeDialog}
                 />
               )}
             </div>
@@ -248,13 +434,36 @@ const DashboardProf: React.FC = () => {
         </main>
       </div>
 
-      <GradeDialog 
+      {/* Grade Dialog */}
+      <GradeDialog
         isOpen={isGradeDialogOpen}
         onOpenChange={setIsGradeDialogOpen}
         student={selectedStudent}
         gradeForm={gradeForm}
         onGradeInputChange={handleGradeInputChange}
         onSubmit={handleSubmitGrade}
+        isSubmitting={isSubmitting}
+      />
+
+      {/* Create Class Dialog */}
+      <CreateClassDialog
+        isOpen={isCreateClassDialogOpen}
+        onOpenChange={setIsCreateClassDialogOpen}
+        onSubmit={handleSubmitClass}
+        isSubmitting={isSubmitting}
+      />
+
+      {/* Create Assignment Dialog */}
+      <CreateAssignmentDialog
+        isOpen={isCreateAssignmentDialogOpen}
+        onOpenChange={setIsCreateAssignmentDialogOpen}
+        classId={selectedClass}
+        lastAssignmentNumber={
+          assignments.length > 0
+            ? Math.max(...assignments.map((a) => a.assignmentNumber))
+            : 0
+        }
+        onSubmit={handleSubmitAssignment}
         isSubmitting={isSubmitting}
       />
     </div>

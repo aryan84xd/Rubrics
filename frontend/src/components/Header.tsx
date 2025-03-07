@@ -6,6 +6,8 @@ interface HeaderProps {
   professor?: {
     name: string;
     id?: string;
+    sapid?:
+    string;
   };
   onLogout: () => void;
 }
@@ -19,7 +21,7 @@ const Header: React.FC<HeaderProps> = ({ professor, onLogout }) => {
       <div className="flex items-center gap-4">
         {professor && (
           <span className="text-sm font-medium text-gray-600">
-            {professor.name} {professor.id && `(${professor.id})`}
+            {professor.name} {professor.sapid&& `(${professor.sapid})`}
           </span>
         )}
         <Button onClick={onLogout} variant="outline">
