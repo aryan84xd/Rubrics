@@ -16,7 +16,7 @@ A web-based application designed to automate rubric generation and student asses
 - **Score Storage & Reports** – Securely store grades and generate **printable rubric reports**.
 
 #### 📸 Feature Screenshots
-_Add relevant screenshots for each feature below_
+
 ![Login](./Overview/Login.png)
 ![Professor Dashboard](./Overview/ProfessorDashboard.png)
 
@@ -27,7 +27,7 @@ _Add relevant screenshots for each feature below_
 - **Generate Rubrics** – Download and print performance reports.
 
 #### 📸 Feature Screenshots
-_Add relevant screenshots for each feature below_
+
 ![Student Dashboard](./Overview/StudentDashboard.png)
 ![Generate Rubrics](./Overview/Rubrics.png)
 
@@ -38,10 +38,6 @@ _Add relevant screenshots for each feature below_
 - **Authentication:** SAP ID & Password
 - **Deployment:** TBD
 
-## 📸 Screenshots
-_Add additional UI previews here_
-
-![Dashboard Preview](path/to/dashboard_preview.png)
 
 ## 🛠️ Installation & Setup
 
