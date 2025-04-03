@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,27 +22,58 @@ interface CreateClassDialogProps {
     batch: string;
     department: string;
     academicYear: string;
+    gradingScheme: Record<string, number>;
   }) => void;
   isSubmitting: boolean;
 }
-
-const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ 
-  isOpen, 
-  onOpenChange, 
+const fixedCategories = [
+  "knowledge",
+  "description",
+  "demonstration",
+  "strategy",
+  "interpret",
+  "attitude",
+  "nonVerbalCommunication",
+];
+const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
+  isOpen,
+  onOpenChange,
   onSubmit,
-  isSubmitting 
+  isSubmitting,
 }) => {
   const [classData, setClassData] = useState({
-    name: '',
-    facultyName: '',
-    courseCode: '',
-    year: '',
-    semester: '',
-    batch: '',
-    department: '',
-    academicYear: '',
+    name: "",
+    facultyName: "",
+    courseCode: "",
+    year: "",
+    semester: "",
+    batch: "",
+    department: "",
+    academicYear: "",
+    gradingScheme: {
+      knowledge: 0,
+      description: 0,
+      demonstration: 0,
+      strategy: 0,
+      interpret: 0,
+      attitude: 0,
+      nonVerbalCommunication: 0,
+    },
   });
+  // Handles grading scheme changes
+  const handleGradeChange = (category: string, value: number) => {
+    const updatedScheme = { ...classData.gradingScheme, [category]: value };
 
+    // Ensure the sum is exactly 25
+    const total = Object.values(updatedScheme).reduce((sum, v) => sum + v, 0);
+
+    if (total <= 25) {
+      setClassData({
+        ...classData,
+        gradingScheme: updatedScheme,
+      });
+    }
+  };
   const handleInputChange = (field: string, value: string) => {
     setClassData({
       ...classData,
@@ -51,111 +82,136 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   };
 
   const handleSubmit = () => {
+    const total = Object.values(classData.gradingScheme).reduce(
+      (sum, v) => sum + v,
+      0
+    );
+    if (total !== 25) {
+      alert("The total grading scheme must sum up to 25.");
+      return;
+    }
+
     onSubmit(classData);
+
+    // Reset form after submission
+    setClassData({
+      name: "",
+      facultyName: "",
+      courseCode: "",
+      year: "",
+      semester: "",
+      batch: "",
+      department: "",
+      academicYear: "",
+      gradingScheme: {
+        knowledge: 0,
+        description: 0,
+        demonstration: 0,
+        strategy: 0,
+        interpret: 0,
+        attitude: 0,
+        nonVerbalCommunication: 0,
+      },
+    });
+
+    // Close modal after submission
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        onOpenChange(open);
+        if (!open) {
+          // Reset when modal is closed
+          setClassData({
+            name: "",
+            facultyName: "",
+            courseCode: "",
+            year: "",
+            semester: "",
+            batch: "",
+            department: "",
+            academicYear: "",
+            gradingScheme: {
+              knowledge: 0,
+              description: 0,
+              demonstration: 0,
+              strategy: 0,
+              interpret: 0,
+              attitude: 0,
+              nonVerbalCommunication: 0,
+            },
+          });
+        }
+      }}
+    >
       <DialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 transform-none sm:max-w-md bg-background p-6 border rounded-lg shadow-lg">
+        {/* Dialog content goes here */}
+
         <DialogHeader>
           <DialogTitle>Create New Class</DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Class Name
-            </Label>
-            <Input
-              id="name"
-              className="col-span-3"
-              value={classData.name}
-              onChange={(e) => handleInputChange("name", e.target.value)}
-            />
-          </div>
+          {/* Class Information Inputs */}
+          {[
+            "name",
+            "facultyName",
+            "courseCode",
+            "year",
+            "semester",
+            "batch",
+            "department",
+            "academicYear",
+          ].map((field) => (
+            <div key={field} className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor={field} className="text-right capitalize">
+                {field.replace(/([A-Z])/g, " $1")}
+              </Label>
+              <Input
+                id={field}
+                className="col-span-3"
+                value={(classData as any)[field]}
+                onChange={(e) => handleInputChange(field, e.target.value)}
+              />
+            </div>
+          ))}
 
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="facultyName" className="text-right">
-              Faculty Name
-            </Label>
-            <Input
-              id="facultyName"
-              className="col-span-3"
-              value={classData.facultyName}
-              onChange={(e) => handleInputChange("facultyName", e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="courseCode" className="text-right">
-              Course Code
-            </Label>
-            <Input
-              id="courseCode"
-              className="col-span-3"
-              value={classData.courseCode}
-              onChange={(e) => handleInputChange("courseCode", e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="year" className="text-right">
-              Year
-            </Label>
-            <Input
-              id="year"
-              className="col-span-3"
-              value={classData.year}
-              onChange={(e) => handleInputChange("year", e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="semester" className="text-right">
-              Semester
-            </Label>
-            <Input
-              id="semester"
-              className="col-span-3"
-              value={classData.semester}
-              onChange={(e) => handleInputChange("semester", e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="batch" className="text-right">
-              Batch
-            </Label>
-            <Input
-              id="batch"
-              className="col-span-3"
-              value={classData.batch}
-              onChange={(e) => handleInputChange("batch", e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="department" className="text-right">
-              Department
-            </Label>
-            <Input
-              id="department"
-              className="col-span-3"
-              value={classData.department}
-              onChange={(e) => handleInputChange("department", e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="academicYear" className="text-right">
-              Academic Year
-            </Label>
-            <Input
-              id="academicYear"
-              className="col-span-3"
-              value={classData.academicYear}
-              onChange={(e) => handleInputChange("academicYear", e.target.value)}
-            />
+          {/* Grading Scheme Section */}
+          <div className="mt-4 border-t pt-4">
+            <h3 className="text-lg font-semibold">
+              Grading Scheme (Total:{" "}
+              {Object.values(classData.gradingScheme).reduce(
+                (sum, v) => sum + v,
+                0
+              )}
+              /25)
+            </h3>
+            {fixedCategories.map((category) => (
+              <div
+                key={category}
+                className="grid grid-cols-4 items-center gap-4"
+              >
+                <Label htmlFor={category} className="text-right capitalize">
+                  {category.replace(/([A-Z])/g, " $1")}
+                </Label>
+                <Input
+                  id={category}
+                  type="number"
+                  className="col-span-3"
+                  min="0"
+                  value={classData.gradingScheme[category]}
+                  onChange={(e) =>
+                    handleGradeChange(
+                      category,
+                      parseInt(e.target.value, 10) || 0
+                    )
+                  }
+                />
+              </div>
+            ))}
           </div>
         </div>
 
@@ -167,11 +223,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
+          <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? "Creating..." : "Create Class"}
           </Button>
         </DialogFooter>

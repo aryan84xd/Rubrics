@@ -109,7 +109,7 @@ exports.verifyToken = (req, res) => {
   try {
     const token = req.cookies.token; // 🔹 Read from cookies
     if (!token) return res.status(401).json({ message: "Unauthorized" });
-    console.log(token);
+    
     const decoded = jwt.verify(token, SECRET_KEY);
     res.status(200).json({ message: "Authenticated", user: decoded });
   } catch (error) {

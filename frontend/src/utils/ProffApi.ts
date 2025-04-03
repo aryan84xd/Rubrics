@@ -27,6 +27,7 @@ interface ClassInfo {
   batch: string;
   department: string;
   academicYear: string;
+  gradingScheme: Record<string, number>; // Add this to include grading categories
 }
 
 interface Assignment {
@@ -47,7 +48,9 @@ interface Grade {
   description: number;
   demonstration: number;
   strategy: number;
+  interpret: number; // New field
   attitude: number;
+  nonVerbalCommunication: number; // New field
   total: number;
 }
 
@@ -57,7 +60,7 @@ interface Grade {
 export const fetchUserDetails = async (): Promise<{ user: UserInfo }> => {
   try {
     const response = await api.get<{ user: UserInfo }>("/auth/details");
-    console.log("User authenticated", response.data);
+    // console.log("User authenticated", response.data);
     return response.data;
   } catch {
     throw new Error("Not authenticated");
@@ -70,7 +73,7 @@ export const getProfClasses = async (): Promise<{ classes: ClassInfo[] }> => {
     const response = await api.get<{ classes: ClassInfo[] }>(
       "/class/my-classes"
     );
-    console.log("Professor's classes fetched:", response.data);
+    // console.log("Professor's classes fetched:", response.data);
     return response.data;
   } catch {
     throw new Error("Failed to fetch classes");
@@ -85,7 +88,7 @@ export const getClassAssignments = async (
     const response = await api.get<{ assignments: Assignment[] }>(
       `/class/${classId}/assignments`
     );
-    console.log("Assignments fetched:", response.data);
+    // console.log("Assignments fetched:", response.data);
     return response.data;
   } catch {
     throw new Error("Failed to fetch assignments");
@@ -100,7 +103,7 @@ export const getClassDetails = async (
     const response = await api.get<{ class: ClassInfo; students: UserInfo[] }>(
       `/class/${classId}`
     );
-    console.log("Class details fetched:", response.data);
+    // console.log("Class details fetched:", response.data);
     return response.data;
   } catch {
     throw new Error("Failed to fetch class details");
@@ -116,6 +119,7 @@ export const getGradesByClass = async (
       grades: Grade[];
       classAverage: number | null;
     }>(`/grade/class/${classId}`);
+    
     console.log("Grades fetched:", response.data);
     return response.data;
   } catch {
@@ -132,6 +136,7 @@ export const getGradesForAssignment = async (
     const response = await api.get<{ grades: Grade[] }>(
       `/assignment/class/${classId}/assignment/${assignmentId}`
     );
+
     console.log("Grades fetched:", response.data);
     return response.data;
   } catch (error) {
@@ -148,7 +153,9 @@ export const addGrade = async (gradeData: {
   description: number;
   demonstration: number;
   strategy: number;
+  interpret: number; // New field
   attitude: number;
+  nonVerbalCommunication: number; // New field
 }): Promise<{ message: string; grade: Grade }> => {
   try {
     const response = await api.post<{ message: string; grade: Grade }>(

@@ -124,6 +124,7 @@ export default function DashboardStudent() {
           {selectedClass ? (
             grades ? (
               <GradesTable
+                classId={selectedClass}
                 grades={grades}
                 isLoading={isLoading}
                 onGenerateRubrics={handleGenerateRubrics}

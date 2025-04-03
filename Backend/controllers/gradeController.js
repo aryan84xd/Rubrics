@@ -3,10 +3,11 @@ const User = require("../models/User");
 const Assignment = require("../models/Assignment");
 const mongoose = require("mongoose");
 const Class = require("../models/Class");
+
 // ✅ Add a Grade using Assignment ID, Roll Number, and Year
 const addGrade = async (req, res) => {
     try {
-        const { assignmentId, sapid, knowledge, description, demonstration, strategy, attitude } = req.body;
+        const { assignmentId, sapid, knowledge, description, demonstration, strategy, interpret, attitude, nonVerbalCommunication } = req.body;
 
         if (!assignmentId || !sapid) {
             return res.status(400).json({ message: "Assignment ID and SAP ID are required." });
@@ -26,6 +27,10 @@ const addGrade = async (req, res) => {
             return res.status(400).json({ message: "Grade already exists for this assignment and student." });
         }
 
+        // Calculate total score
+        const total = (knowledge || 0) + (description || 0) + (demonstration || 0) + (strategy || 0) +
+                      (interpret || 0) + (attitude || 0) + (nonVerbalCommunication || 0);
+
         // Create and save the grade
         const grade = new Grade({
             assignmentId,
@@ -34,7 +39,10 @@ const addGrade = async (req, res) => {
             description,
             demonstration,
             strategy,
-            attitude
+            interpret,
+            attitude,
+            nonVerbalCommunication,
+            total,
         });
 
         await grade.save();
@@ -46,7 +54,7 @@ const addGrade = async (req, res) => {
     }
 };
 
-
+// ✅ Fetch grades for a student in a given class
 const getGradesByClass = async (req, res) => {
     try {
         const { classId } = req.params;
@@ -55,17 +63,17 @@ const getGradesByClass = async (req, res) => {
             return res.status(400).json({ message: "Class ID is required." });
         }
 
-        // Trim and convert classId to ObjectId
+        // Validate and convert classId to ObjectId
         const cleanClassId = classId.trim();
         if (!mongoose.Types.ObjectId.isValid(cleanClassId)) {
             return res.status(400).json({ message: "Invalid Class ID format." });
         }
         const classObjectId = new mongoose.Types.ObjectId(cleanClassId);
 
-        // ✅ Extract user ID from token (already verified by middleware)
+        // Extract user ID from token (already verified by middleware)
         const studentId = req.user.id;
 
-        // Fetch student details (all available fields)
+        // Fetch student details
         const studentDetails = await User.findById(studentId).lean();
         if (!studentDetails) {
             return res.status(404).json({ message: "Student not found." });
@@ -94,7 +102,9 @@ const getGradesByClass = async (req, res) => {
                           (grade.description || 0) + 
                           (grade.demonstration || 0) + 
                           (grade.strategy || 0) + 
-                          (grade.attitude || 0);
+                          (grade.interpret || 0) + 
+                          (grade.attitude || 0) + 
+                          (grade.nonVerbalCommunication || 0);
 
             totalScoreSum += total;
 
@@ -106,7 +116,9 @@ const getGradesByClass = async (req, res) => {
                 description: grade.description || 0,
                 demonstration: grade.demonstration || 0,
                 strategy: grade.strategy || 0,
+                interpret: grade.interpret || 0,
                 attitude: grade.attitude || 0,
+                nonVerbalCommunication: grade.nonVerbalCommunication || 0,
                 total: total
             };
         });
@@ -119,10 +131,6 @@ const getGradesByClass = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
-
-
-
-
 
 module.exports = { 
     addGrade, 

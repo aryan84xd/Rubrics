@@ -50,12 +50,23 @@ const CreateAssignmentDialog: React.FC<CreateAssignmentDialogProps> = ({
 
   const handleSubmit = () => {
     if (!classId) return;
-    
+  
     onSubmit({
       classId,
       ...assignmentData
     });
+  
+    // Reset form fields after submission
+    setAssignmentData({
+      assignmentNumber: lastAssignmentNumber + 1,
+      title: '',
+      description: '',
+      dateOfAssignment: new Date().toISOString().split('T')[0],
+    });
+  
+    onOpenChange(false); // Close the dialog after submission
   };
+  
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>

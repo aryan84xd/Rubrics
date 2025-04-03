@@ -41,7 +41,14 @@ interface Professor {
 interface Class {
   _id: string;
   name: string;
+  facultyName: string;
   courseCode: string;
+  year: number;
+  semester: number;
+  batch: string;
+  department: string;
+  academicYear: string;
+  gradingScheme: Record<string, number>; // Add this to include grading categories
 }
 
 interface Assignment {
@@ -63,7 +70,9 @@ interface Grade {
   description: number;
   demonstration: number;
   strategy: number;
+  interpret: number; // New field
   attitude: number;
+  nonVerbalCommunication: number; // New field
   total: number;
 }
 
@@ -72,8 +81,11 @@ interface GradeForm {
   description: number;
   demonstration: number;
   strategy: number;
+  interpret: number; // New field
   attitude: number;
+  nonVerbalCommunication: number; // New field
 }
+
 
 const DashboardProf: React.FC = () => {
   const [professor, setProfessor] = useState<Professor | null>(null);
@@ -95,8 +107,11 @@ const DashboardProf: React.FC = () => {
     description: 0,
     demonstration: 0,
     strategy: 0,
+    interpret: 0,
     attitude: 0,
+    nonVerbalCommunication: 0,
   });
+  
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,9 +128,10 @@ const DashboardProf: React.FC = () => {
       try {
         const userData = await fetchUserDetails();
         setProfessor({
+          _id: userData.user._id,
           name: userData.user.name,
-          id: userData.user._id,
           sapid: userData.user.sapid,
+          role: userData.user.role, // Ensure role is assigned
         });
       } catch (error) {
         console.error("Error fetching professor details:", error);
@@ -142,6 +158,7 @@ const DashboardProf: React.FC = () => {
 
   const handleClassSelect = async (classId: string) => {
     setIsLoadingAssignments(true);
+    
     setSelectedClass(classId);
     setAssignments([]);
     setSelectedAssignment(null);
@@ -165,19 +182,19 @@ const DashboardProf: React.FC = () => {
   const handleAssignmentSelect = async (assignment: Assignment) => {
     setSelectedAssignment(assignment._id);
     setAssignmentDetails(assignment);
-
+  
     if (!students.length) {
       console.error("No students available");
       return;
     }
-
+  
     try {
       const data = await getGradesForAssignment(
         selectedClass as string,
         assignment._id
       );
       console.log("Grades data:", data);
-
+  
       // Process the grades into a lookup object by student sapid
       const gradesMap: Record<string, Grade> = {};
       data.grades.forEach((grade: any) => {
@@ -187,21 +204,26 @@ const DashboardProf: React.FC = () => {
           description: grade.description,
           demonstration: grade.demonstration,
           strategy: grade.strategy,
+          interpret: grade.interpret, // ✅ Add new field
           attitude: grade.attitude,
+          nonVerbalCommunication: grade.nonVerbalCommunication, // ✅ Add new field
           total:
             grade.knowledge +
             grade.description +
             grade.demonstration +
             grade.strategy +
-            grade.attitude,
+            grade.interpret + // ✅ Include new field in total
+            grade.attitude +
+            grade.nonVerbalCommunication, // ✅ Include new field in total
         };
       });
-
+  
       setGrades(gradesMap);
     } catch (error) {
       console.error("Error fetching grades:", error);
     }
   };
+  
 
   const handleOpenGradeDialog = (student: Student) => {
     setSelectedStudent(student);
@@ -210,46 +232,59 @@ const DashboardProf: React.FC = () => {
       description: 0,
       demonstration: 0,
       strategy: 0,
+      interpret: 0, // Added missing field
       attitude: 0,
+      nonVerbalCommunication: 0 // Added missing field
     });
     setIsGradeDialogOpen(true);
-  };
+};
+
 
   const handleGradeInputChange = (field: keyof GradeForm, value: string) => {
-    // Ensure the value is within 0-5 range
     const numValue = parseInt(value);
-    const validValue = isNaN(numValue) ? 0 : Math.min(Math.max(numValue, 0), 5);
-
-    setGradeForm({
-      ...gradeForm,
-      [field]: validValue,
+    if (isNaN(numValue) || numValue < 0) return; // Prevents negative or invalid input
+  
+    setGradeForm((prev) => {
+      const newTotal = Object.entries(prev).reduce((sum, [key, val]) => 
+        key === field ? sum + numValue - val : sum + val, 0
+      );
+  
+      if (newTotal > 25) {
+        alert("Total grade cannot exceed 25!");
+        return prev; // Reject the update if total exceeds 25
+      }
+  
+      return { ...prev, [field]: numValue };
     });
   };
+  
 
   const handleSubmitGrade = async () => {
-    if (!selectedStudent || !selectedAssignment || !assignmentDetails) return;
-
+    if (!selectedStudent || !selectedAssignment) return;
+  
     setIsSubmitting(true);
-
+  
     try {
+      const totalScore = Object.values(gradeForm).reduce((sum, val) => sum + val, 0); // Sum of all fields
+  
       const gradeData = {
         assignmentId: selectedAssignment,
         sapid: selectedStudent.sapid,
         ...gradeForm,
+        total: totalScore, // Updated total
       };
-
+  
       const response = await addGrade(gradeData);
       console.log("Grade added:", response);
-
-      // Update the grades state
+  
       setGrades((prev) => ({
         ...prev,
         [selectedStudent.sapid]: {
           ...gradeForm,
-          total: Object.values(gradeForm).reduce((sum, val) => sum + val, 0),
+          total: totalScore,
         },
       }));
-
+  
       setIsGradeDialogOpen(false);
     } catch (error) {
       console.error("Error submitting grade:", error);
@@ -258,6 +293,7 @@ const DashboardProf: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+  
 
   // New handlers for create class functionality
   const handleCreateClassClick = () => {
@@ -349,7 +385,7 @@ const DashboardProf: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-
+  
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 w-full">
       <Header
@@ -424,6 +460,7 @@ const DashboardProf: React.FC = () => {
                 <StudentGradesTable
                   students={students}
                   grades={grades}
+                  classId={selectedClass}
                   onOpenGradeDialog={handleOpenGradeDialog}
                 />
               )}
@@ -439,7 +476,8 @@ const DashboardProf: React.FC = () => {
         isOpen={isGradeDialogOpen}
         onOpenChange={setIsGradeDialogOpen}
         student={selectedStudent}
-        gradeForm={gradeForm}
+       
+        classId={selectedClass}
         onGradeInputChange={handleGradeInputChange}
         onSubmit={handleSubmitGrade}
         isSubmitting={isSubmitting}

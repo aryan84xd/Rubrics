@@ -73,7 +73,7 @@ const uploadStudents = async (req, res) => {
         let existingStudent = await User.findOne({ sapid });
   
         if (!existingStudent) {
-          const hashedPassword = await bcrypt.hash("defaultPassword123", 10);
+          const hashedPassword = await bcrypt.hash("password", 10);
           existingStudent = new User({
             sapid,
             name,
