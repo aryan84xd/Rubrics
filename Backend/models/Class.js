@@ -12,12 +12,41 @@ const ClassSchema = new mongoose.Schema({
   profId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   accessCode: { type: String, unique: true, required: true },
 
-  // New field for grading categories and marks allocation
+  // Grading categories and marks allocation
   gradingScheme: {
     type: Map,
-    of: Number, // Stores category name as key and allocated marks as value
+    of: Number,
     default: {},
   },
+
+  // ✅ Number of assignments allowed (max 10)
+  numberOfAssignments: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 10,
+  },
+
+  // ✅ COs for each assignment (e.g., [1, 1, 2, 3, 2])
+  assignmentCOs: {
+    type: [Number],
+    validate: {
+      validator: function (v) {
+        // Length must match the number of assignments
+        return v.length === this.numberOfAssignments;
+      },
+      message: "assignmentCOs length must match numberOfAssignments",
+    },
+    required: true,
+  },
+  // ✅ Table for Course Outcomes with Bloom's Level
+  courseOutcomes: [
+    {
+      code: { type: String, required: true },
+      outcome: { type: String, required: true },
+      bloomsLevel: { type: String, required: true },
+    },
+  ],
 });
 
 module.exports = mongoose.model("Class", ClassSchema);

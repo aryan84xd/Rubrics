@@ -3,7 +3,8 @@ const Assignment = require("../models/Assignment");
 const Class = require("../models/Class");
 const User = require("../models/User");
 
-// Create Assignment
+
+
 const createAssignment = async (req, res) => {
   try {
     if (req.user.role !== "professor") {
@@ -12,6 +13,24 @@ const createAssignment = async (req, res) => {
 
     const { assignmentNumber, title, description, classId, dateOfAssignment } =
       req.body;
+
+    // 1. Get class details
+    const classDoc = await Class.findById(classId);
+    if (!classDoc) {
+      return res.status(404).json({ message: "Class not found" });
+    }
+
+    // 2. Count existing assignments for the class
+    const currentAssignmentCount = await Assignment.countDocuments({ classId });
+
+    // 3. Check against the allowed number of assignments
+    if (currentAssignmentCount >= classDoc.numberOfAssignments) {
+      return res.status(400).json({
+        message: `Maximum of ${classDoc.numberOfAssignments} assignments already created for this class.`,
+      });
+    }
+
+    // 4. Proceed to create new assignment
     const newAssignment = new Assignment({
       assignmentNumber,
       title,
@@ -21,6 +40,7 @@ const createAssignment = async (req, res) => {
     });
 
     await newAssignment.save();
+
     res.json({
       message: "Assignment created successfully",
       assignmentId: newAssignment._id,
@@ -31,6 +51,7 @@ const createAssignment = async (req, res) => {
       .json({ message: "Error creating assignment", error: error.message });
   }
 };
+
 
 // Edit Assignment
 const editAssignment = async (req, res) => {

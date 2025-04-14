@@ -2,7 +2,9 @@ const Class = require("../models/Class");
 const ClassStudent = require("../models/ClassStudent");
 const Assignment = require("../models/Assignment");
 const mongoose = require("mongoose");
+const crypto = require("crypto");
 
+// 📌 Create Class (Professor Only)
 const createClass = async (req, res) => {
   try {
     if (req.user.role !== "professor") {
@@ -21,9 +23,12 @@ const createClass = async (req, res) => {
       department,
       academicYear,
       gradingScheme,
+      numberOfAssignments,
+      assignmentCOs,
+      courseOutcomes // ✅ new field from request body
     } = req.body;
 
-    // Check if the total marks in gradingScheme is 25
+    // Check total marks in gradingScheme
     const totalMarks = Object.values(gradingScheme).reduce(
       (sum, marks) => sum + marks,
       0
@@ -34,8 +39,38 @@ const createClass = async (req, res) => {
         .json({ message: "Total marks in grading scheme must sum to 25" });
     }
 
-    const crypto = require('crypto');
-    const accessCode = crypto.randomBytes(3).toString('hex'); // 6 characters
+    // Check assignmentCOs matches numberOfAssignments
+    if (
+      !Array.isArray(assignmentCOs) ||
+      assignmentCOs.length !== numberOfAssignments
+    ) {
+      return res.status(400).json({
+        message: "assignmentCOs length must match numberOfAssignments"
+      });
+    }
+
+    // ✅ Validate courseOutcomes
+    if (!Array.isArray(courseOutcomes) || courseOutcomes.length === 0) {
+      return res.status(400).json({
+        message: "courseOutcomes must be a non-empty array"
+      });
+    }
+
+    const isValidOutcome = courseOutcomes.every(
+      (co) =>
+        co.code && typeof co.code === "string" &&
+        co.outcome && typeof co.outcome === "string" &&
+        co.bloomsLevel && typeof co.bloomsLevel === "string"
+    );
+
+    if (!isValidOutcome) {
+      return res.status(400).json({
+        message: "Each courseOutcome must include valid code, outcome, and bloomsLevel"
+      });
+    }
+
+    // Generate unique accessCode
+    const accessCode = crypto.randomBytes(3).toString("hex"); // 6-character hex
 
     const newClass = new Class({
       name,
@@ -47,9 +82,11 @@ const createClass = async (req, res) => {
       department,
       academicYear,
       profId: req.user.id,
-      students: [], // Can be empty initially
       accessCode,
-      gradingScheme
+      gradingScheme,
+      numberOfAssignments,
+      assignmentCOs,
+      courseOutcomes // ✅ include in the new class
     });
 
     await newClass.save();
@@ -59,6 +96,10 @@ const createClass = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+module.exports = { createClass };
+
+
 
 
 // 📌 Edit Class (Professor Only)

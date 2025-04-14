@@ -78,7 +78,7 @@ export default function DashboardStudent() {
     navigate("/loginprof");
       
   };
-
+ console.log("grades", grades);
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 w-full">
       {/* Header */}

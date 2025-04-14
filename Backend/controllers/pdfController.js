@@ -18,6 +18,7 @@ const generateRubricPDF = async (req, res) => {
     if (!data || !data.classDetails || !data.grades) {
       return res.status(404).json({ message: "Class data not found" });
     }
+    console.log("Fetched class data:", data);
 
     // Create a temporary directory if it doesn't exist
     const tempDir = path.join(__dirname, "../temp");
@@ -36,8 +37,11 @@ const generateRubricPDF = async (req, res) => {
     });
 
     // Register Times New Roman font (make sure you have the font files)
-    doc.registerFont('Times-Roman', path.join(__dirname, '../fonts/times.ttf'));
-    doc.registerFont('Times-Bold', path.join(__dirname, '../fonts/timesbd.ttf'));
+    doc.registerFont("Times-Roman", path.join(__dirname, "../fonts/times.ttf"));
+    doc.registerFont(
+      "Times-Bold",
+      path.join(__dirname, "../fonts/timesbd.ttf")
+    );
 
     // Pipe the PDF content to a file stream
     const stream = fs.createWriteStream(filePath); // Declare `stream` here
@@ -57,6 +61,7 @@ const generateRubricPDF = async (req, res) => {
     // Path to the logos - update these with your actual paths
     const leftLogoPath = path.join(__dirname, "../assets/svkm-logo.png");
     const rightLogoPath = path.join(__dirname, "../assets/college-logo.png");
+    const bloom = path.join(__dirname, "../assets/bloom.png");
 
     // Add left logo (SVKM)
     if (fs.existsSync(leftLogoPath)) {
@@ -179,7 +184,7 @@ const generateRubricPDF = async (req, res) => {
     // Create array of column widths
     const colWidth = [performanceIndicatorWidth];
     // Add performance columns (1-10)
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i <=10; i++) {
       colWidth.push(performanceColumnWidth);
     }
 
@@ -199,15 +204,23 @@ const generateRubricPDF = async (req, res) => {
         width: colWidth[0] - 10,
         align: "center",
       });
-    
+
     // Calculate total marks from grading scheme
     const gradingScheme = data.classDetails.gradingScheme || {};
-    const totalMaxMarks = Object.values(gradingScheme).reduce((sum, value) => sum + (parseInt(value) || 0), 0);
-    
-    doc.text(`(Maximum ${totalMaxMarks} marks total)`, currentX + 5, currentY + 15, {
-      width: colWidth[0] - 10,
-      align: "center",
-    });
+    const totalMaxMarks = Object.values(gradingScheme).reduce(
+      (sum, value) => sum + (parseInt(value) || 0),
+      0
+    );
+
+    doc.text(
+      `(Maximum ${totalMaxMarks} marks total)`,
+      currentX + 5,
+      currentY + 15,
+      {
+        width: colWidth[0] - 10,
+        align: "center",
+      }
+    );
 
     currentX += colWidth[0];
 
@@ -238,9 +251,23 @@ const generateRubricPDF = async (req, res) => {
       });
     currentX += colWidth[0];
 
-    // Draw empty cells
+    // Fill COs for each assignment
+    const assignmentCOs = data.classDetails.assignmentCOs;
     for (let i = 1; i <= 10; i++) {
       doc.rect(currentX, currentY, colWidth[i], rowHeight).stroke();
+
+      // Only fill CO if this column corresponds to an assignment that has a CO
+      if (i <= assignmentCOs.length) {
+        const coNumber = assignmentCOs[i - 1]; // Get CO for this assignment
+        doc
+          .fontSize(8)
+          .font("Times-Bold")
+          .text(`CO${coNumber}`, currentX + 5, currentY + 10, {
+            width: colWidth[i] - 10,
+            align: "center",
+          });
+      }
+
       currentX += colWidth[i];
     }
 
@@ -250,69 +277,60 @@ const generateRubricPDF = async (req, res) => {
         key: "knowledge",
         labels: [
           "1. Knowledge",
-          "(Factual/Conceptual/Procedural/",
-          "Metacognitive)"
-        ]
+          "(Factual/Conceptual/Procedural/Metacognitive)",
+        ],
       },
       {
         key: "description",
         labels: [
           "2. Describe",
-          "(Factual/Conceptual/Procedural/",
-          "Metacognitive)"
-        ]
+          "(Factual/Conceptual/Procedural/Metacognitive)",
+        ],
       },
       {
         key: "demonstration",
         labels: [
           "3. Demonstration",
-          "(Factual/Conceptual/Procedural/",
-          "Metacognitive)"
-        ]
+          "(Factual/Conceptual/Procedural/Metacognitive)",
+        ],
       },
       {
         key: "strategy",
         labels: [
-          "4. Strategy (Analyse & / or",
-          "Evaluate)",
-          "(Factual/Conceptual/",
-          "Procedural/Metacognitive)"
-        ]
+          "4. Strategy",
+          "(Analyse & / or Evaluate(Factual/Conceptual/Procedural/Metacognitive)",
+        ],
       },
       {
         key: "interpret",
         labels: [
           "5. Interpret/ Develop",
-          "(Factual/Conceptual/",
-          "Procedural/Metacognitive)"
-        ]
+          "(Factual/Conceptual/Procedural/Metacognitive)",
+        ],
       },
       {
         key: "attitude",
         labels: [
           "6. Attitude towards learning",
-          "(receiving, attending, responding,",
-          "valuing, organizing,",
-          "characterization by value)"
-        ]
+          "(receiving, attending, responding,valuing, organizing,characterization by value)",
+        ],
       },
       {
         key: "nonverbal",
         labels: [
-          "7. Non-verbal communication",
-          "skills/ Behaviour or Behavioural",
-          "skills",
+          "7. Non-verbal communicationskills/ Behaviour or Behavioural   skills",
+          "",
           "(motor skills, hand-eye",
           "coordination, gross body",
-          "etc)"
-        ]
-      }
+          "etc)",
+        ],
+      },
     ];
 
     doc.font("Times-Roman");
 
     // Draw criteria rows
-    for (let i = 0; i < criteriaLabels.length; i++) {
+    for (let i = 0; i <criteriaLabels.length; i++) {
       currentY += rowHeight;
       currentX = tableLeft;
 
@@ -328,10 +346,14 @@ const generateRubricPDF = async (req, res) => {
       const shouldSkip = maxMarks === 0;
 
       // Add the criteria text with appropriate formatting
-      const firstLineText = shouldSkip 
-        ? `${criteriaLabels[i].labels[0].split(".")[0]}. ${criteriaLabels[i].labels[0].split(".")[1]}`
-        : `${criteriaLabels[i].labels[0].split(".")[0]}. ${criteriaLabels[i].labels[0].split(".")[1]} (${maxMarks})`;
-      
+      const firstLineText = shouldSkip
+        ? `${criteriaLabels[i].labels[0].split(".")[0]}. ${
+            criteriaLabels[i].labels[0].split(".")[1]
+          }`
+        : `${criteriaLabels[i].labels[0].split(".")[0]}. ${
+            criteriaLabels[i].labels[0].split(".")[1]
+          } (${maxMarks})`;
+
       doc
         .font("Times-Bold")
         .fontSize(8)
@@ -341,9 +363,14 @@ const generateRubricPDF = async (req, res) => {
       doc.font("Times-Roman").fontSize(7);
 
       for (let j = 1; j < criteriaLabels[i].labels.length; j++) {
-        doc.text(criteriaLabels[i].labels[j], currentX + 5, currentY + 5 + j * 10, {
-          width: colWidth[0] - 10,
-        });
+        doc.text(
+          criteriaLabels[i].labels[j],
+          currentX + 5,
+          currentY + 5 + j * 10,
+          {
+            width: colWidth[0] - 10,
+          }
+        );
       }
 
       currentX += colWidth[0];
@@ -363,7 +390,7 @@ const generateRubricPDF = async (req, res) => {
             });
         }
         // Add grade data if available and category is valid
-        else if (j <= data.grades.length) {
+        else if (j <= data.grades.length && data.grades[j - 1]) {
           const grade = data.grades[j - 1];
           let value = "";
 
@@ -393,8 +420,14 @@ const generateRubricPDF = async (req, res) => {
           }
 
           // Modified condition to handle zero values
-          if (value !== undefined && value !== null && value !== "−" && value !== "-") {
-            const displayValue = (value === 0 || value === "0") ? "0" : value.toString();
+          if (
+            value !== undefined &&
+            value !== null &&
+            value !== "−" &&
+            value !== "-"
+          ) {
+            const displayValue =
+              value === 0 || value === "0" ? "0" : value.toString();
             doc
               .font("Times-Roman")
               .fontSize(8)
@@ -431,10 +464,13 @@ const generateRubricPDF = async (req, res) => {
       doc.rect(currentX, currentY, colWidth[j], rowHeight).stroke();
 
       // Add totals if available
-      if (j <= data.grades.length) {
+      if (j <= data.grades.length && data.grades[j - 1]) {
         const grade = data.grades[j - 1];
         if (grade && grade.total !== undefined && grade.total !== null) {
-          const displayTotal = (grade.total === 0 || grade.total === "0") ? "0" : grade.total.toString();
+          const displayTotal =
+            grade.total === 0 || grade.total === "0"
+              ? "0"
+              : grade.total.toString();
           doc
             .font("Times-Roman")
             .fontSize(8)
@@ -466,7 +502,7 @@ const generateRubricPDF = async (req, res) => {
       doc.rect(currentX, currentY, colWidth[j], rowHeight).stroke();
 
       // Add formatted date if available
-      if (j <= data.grades.length) {
+      if (j <= data.grades.length && data.grades[j - 1]) {
         const grade = data.grades[j - 1];
         if (grade && grade.dateOfAssignment) {
           const date = new Date(grade.dateOfAssignment);
@@ -539,10 +575,7 @@ const generateRubricPDF = async (req, res) => {
       .stroke();
 
     // Right side - HOD signature
-    doc
-      .fontSize(10)
-      .font("Times-Bold")
-      .text("Dr Vinaya Savant", 400, currentY);
+    doc.fontSize(10).font("Times-Bold").text("Dr Vinaya Savant", 400, currentY);
     doc
       .fontSize(10)
       .font("Times-Bold")
@@ -578,6 +611,125 @@ const generateRubricPDF = async (req, res) => {
       footerY + 10,
       { align: "center", width: 515 }
     );
+    doc.addPage();
+
+    // Draw page border
+    doc
+      .rect(margin, margin, pageWidth - 2 * margin, pageHeight - 2 * margin)
+      .lineWidth(1)
+      .stroke();
+
+    // Title centered at the top
+    doc.font("Times-Roman").fontSize(16);
+    doc.text("Bloom's (Revised) Taxonomy", margin + 20, margin + 20, {
+      width: pageWidth - 2 * margin - 40,
+      align: "center",
+    });
+
+    // Add Bloom's Taxonomy image (centered)
+    const imageWidth = 500;
+    const imageX = (pageWidth - imageWidth) / 2;
+    const imageY = margin + 50;
+    doc.image(bloom, imageX, imageY, { width: imageWidth });
+
+    // Calculate image height based on aspect ratio (assuming 4:3 ratio)
+    const imageHeight = imageWidth * 0.75;
+
+    // Set initial Y position for content below image
+    let y = imageY + imageHeight + 20;
+
+    // Add image source citation
+    doc.font("Times-Roman").fontSize(9);
+    doc.text(
+      "Source: *Anderson, L.W. (Ed.), Krathwohl, D.R. (Ed.), Airasian, P.W., Cruikshank, K.A., Mayer, R.E., Pintrich, P.R., Raths, J., & Wittrock, M.C. (2001). A taxonomy for learning, teaching, and assessing: A revision of Bloom's Taxonomy of Educational Objectives (Complete edition). New York: Longman.",
+      margin + 20,
+      y,
+      { width: pageWidth - 2 * margin - 40, align: "center", lineBreak: true }
+    );
+    y += 40;
+
+    // Add course title
+    doc.font("Times-Roman").fontSize(12);
+    doc.text(
+      "Course: Professional and Business Communication Laboratory",
+      margin + 20,
+      y
+    );
+    y += 25;
+
+    // Table setup
+    const tableWidth = pageWidth - 2 * margin - 40;
+    const col1Width = 80; // Code column
+    const col3Width = 120; // Bloom's Level column
+    const col2Width = tableWidth - col1Width - col3Width; // Course Outcome column
+
+    const col1 = margin + 20; // Code column start
+    const col2 = col1 + col1Width; // Outcome column start
+    const col3 = col2 + col2Width; // Bloom's Level column start
+
+    // Draw table borders
+    function drawTableCell(x, y, width, height) {
+      doc.rect(x, y, width, height).stroke();
+    }
+
+    // Table headers
+    doc.font("Times-Bold").fontSize(11);
+    const headerHeight = 30;
+    drawTableCell(col1, y, col1Width, headerHeight);
+    drawTableCell(col2, y, col2Width, headerHeight);
+    drawTableCell(col3, y, col3Width, headerHeight);
+
+    // Center text vertically in header cells
+    doc.text("Code", col1, y + 10, { width: col1Width, align: "center" });
+    doc.text("Course Outcome", col2, y + 10, {
+      width: col2Width,
+      align: "center",
+    });
+    doc.text("Bloom's Level", col3, y + 10, {
+      width: col3Width,
+      align: "center",
+    });
+
+    y += headerHeight;
+
+    // Table content
+    doc.font("Times-Roman").fontSize(11);
+    const courseOutcomes = data.classDetails.courseOutcomes;
+
+    courseOutcomes.forEach((outcome) => {
+      // Get the height needed for this outcome
+      const outcomeHeight = doc.heightOfString(outcome.outcome, {
+        width: col2Width - 10,
+        lineBreak: true,
+      });
+
+      const rowHeight = Math.max(30, outcomeHeight + 10); // Add padding
+
+      // Draw row borders
+      drawTableCell(col1, y, col1Width, rowHeight);
+      drawTableCell(col2, y, col2Width, rowHeight);
+      drawTableCell(col3, y, col3Width, rowHeight);
+
+      // Draw Code (centered horizontally and vertically)
+      doc.text(outcome.code || "", col1, y + (rowHeight / 2 - 5), {
+        width: col1Width,
+        align: "center",
+      });
+
+      // Draw Outcome with text wrapping (vertically centered with padding)
+      doc.text(outcome.outcome, col2 + 5, y + 5, {
+        width: col2Width - 10,
+        align: "left",
+      });
+
+      // Draw Bloom's Level (centered horizontally and vertically)
+      doc.text(outcome.bloomsLevel, col3, y + (rowHeight / 2 - 5), {
+        width: col3Width,
+        align: "center",
+      });
+
+      y += rowHeight;
+    });
 
     doc.end();
 

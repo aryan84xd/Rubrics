@@ -361,7 +361,7 @@ const DashboardProf: React.FC = () => {
       setIsCreateAssignmentDialogOpen(false);
     } catch (error) {
       console.error("Error creating assignment:", error);
-      alert("Failed to create assignment. Please try again.");
+      alert("Failed to create assignment. Please make sure you do not exceed the maximum number of assignments.");
     } finally {
       setIsSubmitting(false);
     }
