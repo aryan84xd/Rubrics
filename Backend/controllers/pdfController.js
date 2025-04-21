@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
 
-const BASE_API_URL = "http://localhost:8080/grade/class"; // Modify as needed
+const BASE_API_URL = "https://rubrics-kq04.onrender.com/grade/class"; // Modify as needed
 
 const generateRubricPDF = async (req, res) => {
   try {
