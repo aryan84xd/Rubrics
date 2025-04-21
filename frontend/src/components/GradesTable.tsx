@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { getClassDetails } from "@/utils/ProffApi"; // Fetch class info including grading categories
@@ -18,7 +18,7 @@ interface GradesResponse {
     gradingScheme: Record<string, number>; // Dynamic grading scheme
   };
   grades: Grade[];
-  classAverage: number;
+  classAverage: number| null;
 }
 
 interface GradesTableProps {

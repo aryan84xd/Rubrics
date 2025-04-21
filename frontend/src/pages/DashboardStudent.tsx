@@ -24,7 +24,38 @@ interface StudentClass {
   semester: number;
   batch: string;
 }
+interface ClassDetails {
+  _id: string;
+  name: string;
+  facultyName: string;
+  courseCode: string;
+  year: number;
+  semester: number;
+  batch: string;
+  department: string;
+  academicYear: string;
+  profId: string;
+  gradingScheme: Record<string, number>; // Add this property
+}
 
+interface Grade {
+  assignmentNumber: number;
+  title: string;
+  dateOfAssignment: string;
+  knowledge: number;
+  description: number;
+  demonstration: number;
+  strategy: number;
+  attitude: number;
+  total: number;
+  [key: string]: number | string; // Add this to make it compatible
+}
+interface GradesResponse {
+  studentDetails: StudentDetails;
+  classDetails: ClassDetails;
+  grades: Grade[];
+  classAverage: number | null;
+}
 export default function DashboardStudent() {
   const navigate = useNavigate();
   const [student, setStudent] = useState<StudentDetails | null>(null);
@@ -49,13 +80,13 @@ export default function DashboardStudent() {
 
   const fetchGrades = async (classId: string) => {
     try {
-      const gradesData = await getGradesByClass(classId);
+      const gradesData = await getGradesByClass(classId) as GradesResponse;
       setGrades(gradesData);
     } catch (error) {
       console.error("Error fetching grades:", error);
     }
   };
-
+  
   const handleGenerateRubrics = async () => {
     if (!selectedClass) return;
 
