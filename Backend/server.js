@@ -23,10 +23,11 @@ const limiter = rateLimit({
 app.use(limiter);
 app.use(
   cors({
-    origin: "http://localhost:5173", // Allow frontend origin
-    credentials: true, // Enable sending cookies with requests
+    origin: ["http://localhost:5173", "https://rubrics-nine.vercel.app"],
+    credentials: true,
   })
 );
+
 app.use(express.json());
 app.use(cookieParser()); // Required for handling cookies
 
