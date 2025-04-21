@@ -184,7 +184,7 @@ const generateRubricPDF = async (req, res) => {
     // Create array of column widths
     const colWidth = [performanceIndicatorWidth];
     // Add performance columns (1-10)
-    for (let i = 0; i <=10; i++) {
+    for (let i = 0; i <= 10; i++) {
       colWidth.push(performanceColumnWidth);
     }
 
@@ -330,7 +330,7 @@ const generateRubricPDF = async (req, res) => {
     doc.font("Times-Roman");
 
     // Draw criteria rows
-    for (let i = 0; i <criteriaLabels.length; i++) {
+    for (let i = 0; i < criteriaLabels.length; i++) {
       currentY += rowHeight;
       currentX = tableLeft;
 
@@ -558,41 +558,53 @@ const generateRubricPDF = async (req, res) => {
     // **Step 7: Add Signature Lines**
     currentY += 25;
 
+    // Student signature
     doc
       .fontSize(10)
       .font("Times-Bold")
       .text("Sign of the Student:", tableLeft, currentY);
+    currentY += 10; // Reduced from 15 to 10 for closer spacing
     doc
-      .moveTo(tableLeft + 120, currentY + 5)
-      .lineTo(tableLeft + 300, currentY + 5)
+      .moveTo(tableLeft + 120, currentY)
+      .lineTo(tableLeft + 300, currentY)
       .stroke();
 
-    currentY += 30;
-    doc.text("Signature of the Faculty member:", tableLeft, currentY);
+    currentY += 20; // Space between sections
+
+    // Faculty signature
     doc
-      .moveTo(tableLeft + 170, currentY + 5)
-      .lineTo(tableLeft + 300, currentY + 5)
+      .fontSize(10)
+      .font("Times-Bold")
+      .text("Sign of the Faculty member:", tableLeft, currentY);
+    currentY += 10; // Reduced from 15 to 10 for closer spacing
+    doc
+      .moveTo(tableLeft + 170, currentY)
+      .lineTo(tableLeft + 300, currentY)
       .stroke();
 
     // Right side - HOD signature
+    currentY += 15; // Space before HOD section
     doc.fontSize(10).font("Times-Bold").text("Dr Vinaya Savant", 400, currentY);
     doc
       .fontSize(10)
       .font("Times-Bold")
       .text("Head of the Department", 400, currentY + 15);
 
-    currentY += 20;
-    doc.text("Name of the Faculty member:", tableLeft, currentY);
+    currentY += 25; // Space before faculty name section
+    doc
+      .fontSize(10)
+      .font("Times-Bold")
+      .text("Name of the Faculty member:", tableLeft, currentY);
 
-    // Move down for faculty name (on left side)
-    currentY += 15;
+    // Faculty name
+    currentY += 10; // Reduced spacing
     doc
       .fontSize(10)
       .font("Times-Bold")
       .text(data.classDetails.facultyName, tableLeft, currentY);
 
     // Right side - Date
-    doc.text("Date:", 400, currentY);
+    doc.fontSize(10).font("Times-Bold").text("Date:", 400, currentY);
 
     // Add footer with college details
     const footerY = pageHeight - 50;
