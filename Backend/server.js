@@ -36,6 +36,9 @@ mongoose
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.error("MongoDB Connection Error:", err));
 
+app.get("/", (req, res) => {
+  res.send("Rubrics API is Live!");
+});
 app.use("/auth", authRoutes);
 app.use("/class", classRoutes);
 app.use("/assignment", assignmentRoutes);
