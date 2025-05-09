@@ -6,6 +6,7 @@ import {
   getGradesForAssignment,
   getClassDetails,
   addGrade,
+  updateGrade,
   createClass,
   createAssignment,
 } from "@/utils/ProffApi";
