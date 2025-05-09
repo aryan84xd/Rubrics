@@ -10,8 +10,10 @@ const assignmentRoutes = require("./routes/assignmentRoutes");
 const gradeRoutes = require("./routes/gradeRoutes");
 const pdfRoutes = require("./routes/pdfRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
+
 dotenv.config();
 const app = express();
+
 // ✅ Rate limiter middleware
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -21,10 +23,19 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 app.use(limiter);
+
+// Updated CORS configuration to include both local and deployed origins
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://rubrics-nine.vercel.app"],
+    origin: [
+      "http://localhost:5173", 
+      "https://rubrics-nine.vercel.app",
+      // Add the origin that's making the request (your frontend deployed URL)
+      "https://rubrics-kq04.onrender.com"
+    ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
 
@@ -40,11 +51,13 @@ mongoose
 app.get("/", (req, res) => {
   res.send("Rubrics API is Live!");
 });
+
 app.use("/auth", authRoutes);
 app.use("/class", classRoutes);
 app.use("/assignment", assignmentRoutes);
 app.use("/grade", gradeRoutes);
 app.use("/pdf", pdfRoutes);
 app.use("/upload", uploadRoutes);
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
