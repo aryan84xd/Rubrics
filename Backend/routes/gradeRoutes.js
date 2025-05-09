@@ -5,7 +5,7 @@ const { addGrade, getGradesByClass,updateGrade } = require("../controllers/grade
 
 // Route to add a grade (Only professors should be allowed)
 router.post("/add", authMiddleware, addGrade);
-router.put("/add", authMiddleware, updateGrade);
+router.post("/update", authMiddleware, updateGrade);
 router.get("/class/:classId", authMiddleware, getGradesByClass);
 
 

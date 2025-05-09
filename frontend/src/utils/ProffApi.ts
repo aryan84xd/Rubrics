@@ -182,7 +182,7 @@ export const updateGrade = async (gradeData: {
   nonVerbalCommunication?: number;
 }): Promise<{ message: string; grade: Grade }> => {
   try {
-    const response = await api.put<{ message: string; grade: Grade }>(
+    const response = await api.post<{ message: string; grade: Grade }>(
       "/grade/update",
       gradeData
     );
