@@ -73,21 +73,34 @@ const StudentGradesTable: React.FC<StudentGradesTableProps> = ({
                 <th className="border border-gray-300 px-4 py-2">Sapid</th>
                 <th className="border border-gray-300 px-4 py-2">Name</th>
                 {gradingCategories.map((category) => (
-                  <th key={category} className="border border-gray-300 px-4 py-2 capitalize">
-                    {category.replace(/([A-Z])/g, " $1")} {/* Format CamelCase */}
+                  <th
+                    key={category}
+                    className="border border-gray-300 px-4 py-2 capitalize"
+                  >
+                    {category.replace(/([A-Z])/g, " $1")}{" "}
+                    {/* Format CamelCase */}
                   </th>
                 ))}
-                <th className="border border-gray-300 px-4 py-2">Total Grade</th>
+                <th className="border border-gray-300 px-4 py-2">
+                  Total Grade
+                </th>
                 <th className="border border-gray-300 px-4 py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
               {students.map((student) => (
                 <tr key={student._id} className="bg-white">
-                  <td className="border border-gray-300 px-4 py-2">{student.sapid}</td>
-                  <td className="border border-gray-300 px-4 py-2">{student.name}</td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {student.sapid}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {student.name}
+                  </td>
                   {gradingCategories.map((category) => (
-                    <td key={category} className="border border-gray-300 px-4 py-2 text-center">
+                    <td
+                      key={category}
+                      className="border border-gray-300 px-4 py-2 text-center"
+                    >
                       {grades[student.sapid]?.[category] ?? "-"}
                     </td>
                   ))}
@@ -95,11 +108,13 @@ const StudentGradesTable: React.FC<StudentGradesTableProps> = ({
                     {grades[student.sapid]?.total ?? "Not graded"}
                   </td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    {!grades[student.sapid] && (
-                      <Button variant="outline" size="sm" onClick={() => onOpenGradeDialog(student)}>
-                        Grade
-                      </Button>
-                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onOpenGradeDialog(student)}
+                    >
+                      {grades[student.sapid] ? "Update" : "Grade"}
+                    </Button>
                   </td>
                 </tr>
               ))}

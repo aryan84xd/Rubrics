@@ -169,6 +169,33 @@ export const addGrade = async (gradeData: {
     throw new Error("Failed to add grade");
   }
 };
+
+export const updateGrade = async (gradeData: {
+  assignmentId: string;
+  sapid: string;
+  knowledge?: number;
+  description?: number;
+  demonstration?: number;
+  strategy?: number;
+  interpret?: number;
+  attitude?: number;
+  nonVerbalCommunication?: number;
+}): Promise<{ message: string; grade: Grade }> => {
+  try {
+    const response = await api.put<{ message: string; grade: Grade }>(
+      "/grade/update",
+      gradeData
+    );
+    console.log("Grade updated successfully:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating grade:", error);
+    throw new Error("Failed to update grade");
+  }
+};
+
+
+
 export const createClass = async (classData: {
   name: string;
   facultyName: string;

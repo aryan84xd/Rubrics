@@ -53,6 +53,55 @@ const addGrade = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+const updateGrade = async (req, res) => {
+    try {
+        const { assignmentId, sapid, knowledge, description, demonstration, strategy, interpret, attitude, nonVerbalCommunication } = req.body;
+
+        if (!assignmentId || !sapid) {
+            return res.status(400).json({ message: "Assignment ID and SAP ID are required." });
+        }
+
+        // Find student by sapid
+        const student = await User.findOne({ sapid, role: "student" });
+
+        if (!student) {
+            return res.status(404).json({ message: "Student not found with this SAP ID." });
+        }
+
+        // Find the grade to update
+        const grade = await Grade.findOne({ assignmentId, studentId: student._id });
+
+        if (!grade) {
+            return res.status(404).json({ message: "Grade not found for this assignment and student." });
+        }
+
+        // Update the grade fields if provided
+        grade.knowledge = knowledge ?? grade.knowledge;
+        grade.description = description ?? grade.description;
+        grade.demonstration = demonstration ?? grade.demonstration;
+        grade.strategy = strategy ?? grade.strategy;
+        grade.interpret = interpret ?? grade.interpret;
+        grade.attitude = attitude ?? grade.attitude;
+        grade.nonVerbalCommunication = nonVerbalCommunication ?? grade.nonVerbalCommunication;
+
+        // Recalculate total
+        grade.total =
+            (grade.knowledge || 0) +
+            (grade.description || 0) +
+            (grade.demonstration || 0) +
+            (grade.strategy || 0) +
+            (grade.interpret || 0) +
+            (grade.attitude || 0) +
+            (grade.nonVerbalCommunication || 0);
+
+        await grade.save();
+        res.status(200).json({ message: "Grade updated successfully", grade });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
 
 // ✅ Fetch grades for a student in a given class
 const getGradesByClass = async (req, res) => {
@@ -134,5 +183,6 @@ const getGradesByClass = async (req, res) => {
 
 module.exports = { 
     addGrade, 
+    updateGrade,
     getGradesByClass
 };

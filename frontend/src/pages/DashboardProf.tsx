@@ -63,7 +63,6 @@ interface Student {
   _id: string;
   sapid: string;
   name: string;
-  
 }
 
 interface Grade {
@@ -222,18 +221,36 @@ const DashboardProf: React.FC = () => {
   };
 
   const handleOpenGradeDialog = (student: Student) => {
-    setSelectedStudent(student);
+  setSelectedStudent(student);
+
+  const existingGrades = grades[student.sapid];
+
+  if (existingGrades) {
+    const { total, ...gradeFields } = existingGrades;
+    setGradeForm({
+      knowledge: gradeFields.knowledge ?? 0,
+      description: gradeFields.description ?? 0,
+      demonstration: gradeFields.demonstration ?? 0,
+      strategy: gradeFields.strategy ?? 0,
+      interpret: gradeFields.interpret ?? 0,
+      attitude: gradeFields.attitude ?? 0,
+      nonVerbalCommunication: gradeFields.nonVerbalCommunication ?? 0,
+    });
+  } else {
     setGradeForm({
       knowledge: 0,
       description: 0,
       demonstration: 0,
       strategy: 0,
-      interpret: 0, // Added missing field
+      interpret: 0,
       attitude: 0,
-      nonVerbalCommunication: 0, // Added missing field
+      nonVerbalCommunication: 0,
     });
-    setIsGradeDialogOpen(true);
-  };
+  }
+
+  setIsGradeDialogOpen(true);
+};
+
 
   const handleGradeInputChange = (field: keyof GradeForm, value: string) => {
     const numValue = parseInt(value);
@@ -272,7 +289,10 @@ const DashboardProf: React.FC = () => {
         total: totalScore, // Updated total
       };
 
-      const response = await addGrade(gradeData);
+      const response = grades[selectedStudent.sapid]
+        ? await updateGrade(gradeData)
+        : await addGrade(gradeData);
+
       console.log("Grade added:", response);
 
       setGrades((prev) => ({
@@ -457,7 +477,6 @@ const DashboardProf: React.FC = () => {
 
               {selectedAssignment && (
                 <StudentGradesTable
-                  
                   grades={grades}
                   classId={selectedClass}
                   onOpenGradeDialog={handleOpenGradeDialog}
