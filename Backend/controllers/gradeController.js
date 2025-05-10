@@ -171,7 +171,8 @@ const getGradesByClass = async (req, res) => {
                 total: total
             };
         });
-
+        // ✅ Sort grades by assignment number
+        formattedGrades.sort((a, b) => a.assignmentNumber - b.assignmentNumber);
         const classAverage = totalAssignments > 0 ? totalScoreSum / totalAssignments : null;
 
         res.status(200).json({ studentDetails, classDetails, grades: formattedGrades, classAverage });
