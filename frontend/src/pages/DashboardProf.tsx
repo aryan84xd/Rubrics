@@ -429,7 +429,7 @@ const DashboardProf: React.FC = () => {
                   open={isUploadDialogOpen}
                   onOpenChange={setIsUploadDialogOpen}
                 >
-                  <DialogContent className="sm:max-w-[425px]">
+                  <DialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 transform-none sm:max-w-md bg-background p-6 border rounded-lg shadow-lg">
                     <DialogHeader>
                       <DialogTitle>Upload Students</DialogTitle>
                     </DialogHeader>
